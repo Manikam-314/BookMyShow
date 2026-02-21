@@ -1,6 +1,5 @@
 package com.gfg.movieshark.movieshark_master.controller;
 
-
 import com.gfg.movieshark.movieshark_master.resource.MovieResource;
 import com.gfg.movieshark.movieshark_master.service.MovieService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,7 +17,7 @@ public class MovieController {
     @PostMapping("/add")
     public ResponseEntity<MovieResource> addMovie(@RequestBody MovieResource movieRequest) {
 
-        //return ResponseEntity.ok(movieService.addMovie(movieRequest));
+        // return ResponseEntity.ok(movieService.addMovie(movieRequest));
         return new ResponseEntity<>(movieService.addMovie(movieRequest), HttpStatus.CREATED); // 201 CREATED;
     }
 
@@ -27,6 +26,7 @@ public class MovieController {
 
         return ResponseEntity.ok(movieService.getMovie(id));
     }
+
     @GetMapping("/all")
     public ResponseEntity<?> getAllMovies() {
         return ResponseEntity.ok(movieService.getAllMovies());

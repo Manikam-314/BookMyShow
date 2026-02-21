@@ -1,0 +1,13 @@
+@import "tailwindcss";
+
+@theme {
+  --color-bms-red: #F84464;
+  --color-bms-grey: #333545;
+  --color-bms-bg: #F5F5F5;
+}
+
+@layer base {
+  body {
+    @apply bg-bms-bg text-gray-800 font-sans;
+  }
+}

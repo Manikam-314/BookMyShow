@@ -36,6 +36,18 @@ public class Theater {
 	@Column(name = "address", nullable = false)
 	private String address;
 
+	@Column(name = "total_rows")
+	private Integer totalRows;
+
+	@Column(name = "total_columns")
+	private Integer totalColumns;
+
+	@Transient
+	private Integer capacity;
+
+	@Column(name = "show_timings")
+	private String showTimings; // Comma separated: "10:00,14:00,18:00"
+
 	@OneToMany(mappedBy = "theater", cascade = CascadeType.ALL)
 	@JsonIgnore
 	@Builder.Default
@@ -49,10 +61,13 @@ public class Theater {
 	public static Theater toEntity(TheaterResource theaterResource) {
 
 		return Theater.builder()
-                .name(theaterResource.getName())
-                .city(theaterResource.getCity())
-                .address(theaterResource.getAddress())
-                .build();
+				.name(theaterResource.getName())
+				.city(theaterResource.getCity())
+				.address(theaterResource.getAddress())
+				.totalRows(theaterResource.getTotalRows())
+				.totalColumns(theaterResource.getTotalColumns())
+				.showTimings(theaterResource.getShowTimings())
+				.build();
 	}
 
 	public static TheaterResource toResource(Theater theater) {
@@ -62,7 +77,16 @@ public class Theater {
 				.name(theater.getName())
 				.city(theater.getCity())
 				.address(theater.getAddress())
+				.totalRows(theater.getTotalRows() != null ? theater.getTotalRows() : 10) // Default for existing data
+				.totalColumns(theater.getTotalColumns() != null ? theater.getTotalColumns() : 15) // Default for
+																									// existing data
+				.capacity(theater.getCapacity())
+				.showTimings(theater.getShowTimings())
 				.build();
+	}
+
+	public Integer getCapacity() {
+		return (totalRows != null && totalColumns != null) ? totalRows * totalColumns : 0;
 	}
 
 }

@@ -1,6 +1,5 @@
 package com.gfg.movieshark.movieshark_master.controller;
 
-
 import com.gfg.movieshark.movieshark_master.resource.UserResource;
 import com.gfg.movieshark.movieshark_master.service.UserService;
 import jakarta.validation.constraints.Min;
@@ -30,7 +29,13 @@ public class UserController {
 
     // ✅ KEEP THIS
     @GetMapping("/{id}")
-    public ResponseEntity<UserResource> getUser(@PathVariable @Min(value = 1, message = "User Id Cannot be -ve") long id) {
+    public ResponseEntity<UserResource> getUser(
+            @PathVariable @Min(value = 1, message = "User Id Cannot be -ve") long id) {
         return ResponseEntity.ok(userService.getUser(id));
+    }
+
+    @PostMapping("/login")
+    public ResponseEntity<UserResource> login(@RequestBody UserResource loginRequest) {
+        return ResponseEntity.ok(userService.login(loginRequest.getEmail(), loginRequest.getPassword()));
     }
 }

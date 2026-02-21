@@ -18,12 +18,12 @@ import java.util.List;
 @Builder
 @AllArgsConstructor
 @ToString
-public class    ShowResource {
+public class ShowResource {
 
 	private long id;
 
 	@NotNull(message = "Show Time is Mandatory")
-	@JsonFormat(shape=JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss[.SSS][.SS][.S]")
+	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss[.SSS][.SS][.S]")
 	@JsonSerialize(using = LocalDateTimeSerializer.class)
 	@JsonDeserialize(using = LocalDateTimeDeserializer.class)
 	private LocalDateTime showTime;
@@ -43,4 +43,8 @@ public class    ShowResource {
 	private TheaterResource theaterResource;
 
 	private List<ShowSeatsResource> seats;
+
+	private int minPrice;
+
+	private int maxPrice;
 }

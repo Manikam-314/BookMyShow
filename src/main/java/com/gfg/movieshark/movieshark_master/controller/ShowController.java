@@ -19,20 +19,39 @@ public class ShowController {
 
     @GetMapping("/search")
     public ResponseEntity<List<ShowResource>> search(
-            @RequestParam(name="city",required = true) String cityName,
+            @RequestParam(name = "city", required = false) String cityName,
             @RequestParam(name = "movieName", required = false) String movieName,
-            @RequestParam(name =  "theaterName",required = false) String theaterName) {
-        return ResponseEntity.ok(showService.searchShows(movieName,cityName,theaterName));
+            @RequestParam(name = "theaterName", required = false) String theaterName) {
+        return ResponseEntity.ok(showService.searchShows(movieName, cityName, theaterName));
     }
 
     @PostMapping("/add")
     public ResponseEntity<ShowResource> addShow(@RequestBody ShowResource showResource) {
         showService.addShow(showResource);
         return ResponseEntity.ok(showResource);
-        }}
-//    }
-//    // ✅ ADD THIS
-//    @GetMapping("/all")
-//    public ResponseEntity<?> getAllShows() {
-//        return ResponseEntity.ok(ShowService.getAllShows());
-//    }
+    }
+
+    @GetMapping("/{id}/seats")
+    public ResponseEntity<List<com.gfg.movieshark.movieshark_master.resource.ShowSeatsResource>> getShowSeats(
+            @PathVariable(name = "id") long id) {
+        return ResponseEntity.ok(showService.getShowSeats(id));
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<ShowResource> getShowById(@PathVariable(name = "id") long id) {
+        return ResponseEntity.ok(showService.getShowById(id));
+    }
+
+    @GetMapping("/slots")
+    public ResponseEntity<List<String>> getSlots(
+            @RequestParam(name = "theaterId") long theaterId,
+            @RequestParam(name = "date") String date) {
+        return ResponseEntity.ok(showService.getAvailableSlots(theaterId, date));
+    }
+}
+// }
+// // ✅ ADD THIS
+// @GetMapping("/all")
+// public ResponseEntity<?> getAllShows() {
+// return ResponseEntity.ok(ShowService.getAllShows());
+// }
