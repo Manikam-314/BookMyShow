@@ -47,4 +47,8 @@ public class ShowResource {
 	private int minPrice;
 
 	private int maxPrice;
+
+	private int bookedSeatsCount;
+
+	private int totalSeatsCount;
 }

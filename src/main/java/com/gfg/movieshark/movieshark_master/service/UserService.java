@@ -50,7 +50,7 @@ public class UserService {
     }
 
     public UserResource login(String email, String password) {
-        User user = userRepository.findByEmail(email);
+        User user = userRepository.findTopByEmailOrderByIdDesc(email);
         if (user != null && user.getPassword().equals(password)) {
             return User.toResource(user);
         }

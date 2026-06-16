@@ -1,6 +1,6 @@
 import React from 'react';
 import { Outlet, Link, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Film, Monitor, Calendar, LogOut } from 'lucide-react';
+import { LayoutDashboard, Film, Monitor, Calendar, LogOut, ClipboardList } from 'lucide-react';
 
 const AdminLayout: React.FC = () => {
     const location = useLocation();
@@ -8,8 +8,9 @@ const AdminLayout: React.FC = () => {
     const NAV_ITEMS = [
         { path: '/admin', label: 'Dashboard', icon: LayoutDashboard },
         { path: '/admin/movies', label: 'Movies', icon: Film },
-        { path: '/admin/theatres', label: 'Theatres', icon: Monitor }, // Monitor icon for screen/theatre
+        { path: '/admin/theatres', label: 'Theatres', icon: Monitor },
         { path: '/admin/shows', label: 'Shows', icon: Calendar },
+        { path: '/admin/theatre-requests', label: 'Theatre Requests', icon: ClipboardList },
     ];
 
     return (

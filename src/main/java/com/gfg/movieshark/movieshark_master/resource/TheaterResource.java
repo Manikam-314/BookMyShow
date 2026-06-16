@@ -26,6 +26,8 @@ public class TheaterResource {
 
 	private int capacity;
 
+	private boolean seatsConfigured;
+
 	private String showTimings;
 
 	private List<ShowResource> shows;

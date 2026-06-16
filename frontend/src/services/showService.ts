@@ -25,6 +25,7 @@ export const showService = {
         return response.data;
     },
     getAvailableSlots: async (theaterId: string, date: string) => {
+        console.log(`Fetching available slots for Date: ${date}, Theater ID: ${theaterId}`);
         const response = await api.get<string[]>(`/show/slots?theaterId=${theaterId}&date=${date}`);
         return response.data;
     }

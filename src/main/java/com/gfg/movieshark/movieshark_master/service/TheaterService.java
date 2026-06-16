@@ -11,12 +11,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import jakarta.persistence.EntityNotFoundException;
+import org.springframework.transaction.annotation.Transactional;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
 @Slf4j
 @Service
+@Transactional
 public class TheaterService {
 
     @Autowired
@@ -73,12 +75,43 @@ public class TheaterService {
         }
 
         Theater theater = theaterEntity.get();
+
+        // One-time seat configuration logic
+        if (Boolean.TRUE.equals(theater.getSeatsConfigured())) {
+            // If already configured, we DO NOT allow changing rows/cols
+            if ((theaterResource.getTotalRows() > 0 && theaterResource.getTotalRows() != theater.getTotalRows()) ||
+                    (theaterResource.getTotalColumns() > 0
+                            && theaterResource.getTotalColumns() != theater.getTotalColumns())) {
+                throw new IllegalStateException("Seat configuration is already locked and cannot be edited.");
+            }
+        } else {
+            // First-time configuration
+            if (theaterResource.getTotalRows() > 0 && theaterResource.getTotalColumns() > 0) {
+                theater.setTotalRows(theaterResource.getTotalRows());
+                theater.setTotalColumns(theaterResource.getTotalColumns());
+                theater.setSeatsConfigured(true);
+
+                // Regenerate seats based on new config
+                theaterSeatsRepository.deleteByTheater(theater);
+                List<TheaterSeats> newSeats = getTheaterSeats(theater.getTotalRows(), theater.getTotalColumns());
+                for (TheaterSeats seat : newSeats) {
+                    seat.setTheater(theater);
+                }
+                theater.getSeats().clear();
+                theater.getSeats().addAll(newSeats);
+                log.info("Locked seat configuration for Theater {}: {}x{}", theater.getId(), theater.getTotalRows(),
+                        theater.getTotalColumns());
+            }
+        }
+
         if (theaterResource.getName() != null)
             theater.setName(theaterResource.getName());
         if (theaterResource.getCity() != null)
             theater.setCity(theaterResource.getCity());
         if (theaterResource.getAddress() != null)
             theater.setAddress(theaterResource.getAddress());
+        if (theaterResource.getShowTimings() != null)
+            theater.setShowTimings(theaterResource.getShowTimings());
 
         theater = theaterRepository.save(theater);
 

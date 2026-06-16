@@ -73,7 +73,6 @@ public class Movie {
 				.imageUrl(movie.getImageUrl())
 				.bannerUrl(movie.getBannerUrl())
 				.votes(movie.getVotes())
-				.reviews(Review.toResource(movie.getReviews()))
 				.build();
 	}
 }

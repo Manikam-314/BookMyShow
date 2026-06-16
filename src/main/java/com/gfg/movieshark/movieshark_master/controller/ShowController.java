@@ -44,14 +44,16 @@ public class ShowController {
 
     @GetMapping("/slots")
     public ResponseEntity<List<String>> getSlots(
-            @RequestParam(name = "theaterId") long theaterId,
+            @RequestParam(name = "theaterId", required = false) Long theaterId,
+            @RequestParam(name = "theatreId", required = false) Long theatreId,
             @RequestParam(name = "date") String date) {
-        return ResponseEntity.ok(showService.getAvailableSlots(theaterId, date));
+        long id = (theaterId != null) ? theaterId : (theatreId != null ? theatreId : 0L);
+        return ResponseEntity.ok(showService.getAvailableSlots(id, date));
+    }
+
+    // ✅ ADD THIS
+    @GetMapping("/all")
+    public ResponseEntity<?> getAllShows() {
+        return ResponseEntity.ok(showService.getAllShows());
     }
 }
-// }
-// // ✅ ADD THIS
-// @GetMapping("/all")
-// public ResponseEntity<?> getAllShows() {
-// return ResponseEntity.ok(ShowService.getAllShows());
-// }

@@ -1,14 +1,22 @@
 package com.gfg.movieshark.movieshark_master;
 
 import com.gfg.movieshark.movieshark_master.domain.User;
+import com.gfg.movieshark.movieshark_master.enums.Genre;
 import com.gfg.movieshark.movieshark_master.enums.Role;
-import com.gfg.movieshark.movieshark_master.service.UserAuthService;
+import com.gfg.movieshark.movieshark_master.repository.UserRepository;
+import com.gfg.movieshark.movieshark_master.resource.MovieResource;
+import com.gfg.movieshark.movieshark_master.service.MovieService;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
+import org.springframework.data.elasticsearch.repository.config.EnableElasticsearchRepositories;
+import org.springframework.scheduling.annotation.EnableScheduling;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 @SpringBootApplication
+@EnableScheduling
+@EnableElasticsearchRepositories(basePackages = "com.gfg.movieshark.movieshark_master.search")
 public class MoviesharkMasterApplication {
 
     public static void main(String[] args) {
@@ -16,22 +24,24 @@ public class MoviesharkMasterApplication {
     }
 
     @Bean
-    CommandLineRunner runner(UserAuthService userAuthService,
-            com.gfg.movieshark.movieshark_master.service.MovieService movieService) {
+    CommandLineRunner runner(MovieService movieService,
+            UserRepository userRepository,
+            PasswordEncoder passwordEncoder) {
         return args -> {
             System.out.println("RUNNER IS EXECUTING 🔥");
 
-            // Seed Admin User
-            try {
+            // Seed Admin User — only if none exists yet
+            if (!userRepository.existsByEmail("admin@gmail.com")) {
                 User user = new User();
                 user.setName("admin");
-                user.setPassword("1234");
+                user.setPassword(passwordEncoder.encode("1234")); // always BCrypt
                 user.setMobile("9999999999");
                 user.setEmail("admin@gmail.com");
                 user.setRole(Role.ADMIN);
-                userAuthService.addUser(user);
-            } catch (Exception e) {
-                System.out.println("Admin user might already exist.");
+                userRepository.save(user);
+                System.out.println("Admin user seeded ✅");
+            } else {
+                System.out.println("Admin user already exists — skipping seed.");
             }
 
             // Seed Movies
@@ -82,20 +92,18 @@ public class MoviesharkMasterApplication {
         }
     }
 
-    private void createMovieIfNotExists(com.gfg.movieshark.movieshark_master.service.MovieService movieService,
-            String title, com.gfg.movieshark.movieshark_master.enums.Genre genre, Double rating, String imageUrl,
+    private void createMovieIfNotExists(MovieService movieService,
+            String title, Genre genre, Double rating, String imageUrl,
             String bannerUrl, String votes) {
         try {
-            // Very simple check, in a real app service should handle idempotency better or
-            // we check repo
-            com.gfg.movieshark.movieshark_master.resource.MovieResource movie = new com.gfg.movieshark.movieshark_master.resource.MovieResource();
+            MovieResource movie = new MovieResource();
             movie.setTitle(title);
             movie.setGenre(genre);
             movie.setRating(rating);
             movie.setImageUrl(imageUrl);
             movie.setBannerUrl(bannerUrl);
             movie.setVotes(votes);
-            movieService.addMovie(movie); // The service logic we saw earlier already checks existsByTitle
+            movieService.addMovie(movie);
         } catch (Exception e) {
             System.out.println("Skipping movie " + title + ": " + e.getMessage());
         }

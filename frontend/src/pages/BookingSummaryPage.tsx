@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { ChevronLeft, ChevronRight, CreditCard, Wallet, Smartphone, Gift, Monitor, Clock, Crown, ChevronDown, CheckCircle2, Loader2 } from 'lucide-react';
-import { bookingService } from '../services/bookingService';
+import { ChevronLeft, ChevronRight, CreditCard, Wallet, Smartphone, Gift, Monitor, Clock, ChevronDown, CheckCircle2, Loader2, ShieldCheck, Zap, Calendar } from 'lucide-react';
+import { paymentService } from '../services/paymentService';
 
 const BookingSummaryPage: React.FC = () => {
     const navigate = useNavigate();
@@ -12,9 +12,17 @@ const BookingSummaryPage: React.FC = () => {
     const [isProcessing, setIsProcessing] = useState(false);
     const [bookingError, setBookingError] = useState<string | null>(null);
 
-    if (!movie || !theatre || !show) return <div className="p-10 text-center">No booking details found.</div>;
+    React.useEffect(() => {
+        const script = document.createElement('script');
+        script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+        script.async = true;
+        document.body.appendChild(script);
+        return () => { document.body.removeChild(script); };
+    }, []);
 
-    const baseConvenienceFee = 70.80; // Example fixed fee
+    if (!movie || !theatre || !show) return <div className="p-10 text-center bg-[#0a0a0f] text-slate-500 h-screen">No booking details found.</div>;
+
+    const baseConvenienceFee = 70.80;
     const donation = 2.00;
     const [isDonationActive, setIsDonationActive] = useState(true);
 
@@ -24,95 +32,145 @@ const BookingSummaryPage: React.FC = () => {
         setIsProcessing(true);
         setBookingError(null);
         try {
-            // Determine seatType from the first selected seat
-            const seatType = selectedSeats?.[0]?.type || 'RECLINER';
-
-            // Build seat numbers like "J1", "J2" from row + number
+            const rawSeatType = selectedSeats?.[0]?.type || 'RECLINER';
+            const seatType = (rawSeatType === 'RECLINER') ? 'RECLINER' : 'REGULAR';
             const seatsNumbers: string[] = selectedSeats?.map((s: any) => `${s.row}${s.number}`) || [];
 
-            // Fetch the first real user from the backend (since no login session exists)
             let userId = 1;
             try {
-                const usersResponse = await import('../services/api').then(m => m.default.get('/user/all'));
-                const users = usersResponse.data;
-                if (users && users.length > 0) {
-                    userId = users[0].id;
+                const stored = localStorage.getItem('auth_user');
+                if (stored) {
+                    userId = JSON.parse(stored).userId;
                 }
-            } catch {
-                // fallback to 1 if fetch fails
-            }
+            } catch { }
 
-            const result = await bookingService.bookTickets({
+            const bookingResource = {
                 userId,
                 showId: show.id,
                 seatsNumbers,
                 seatType,
-            });
+            };
 
-            // result.id is the real ticket ID from the DB
-            const realBookingId = result?.id ? `BMS-${result.id}` : `BMS-${Math.floor(Math.random() * 1000000)}`;
+            // 1. Create Order on Backend
+            const orderResult = await paymentService.createOrder(finalAmount, bookingResource);
 
-            navigate('/booking-success', {
-                state: { movie, theatre, show, selectedSeats, amountPayable: finalAmount, ticketCount, bookingId: realBookingId }
+            // Mock Mode: Bypass Razorpay Modal if using mock keys
+            if (orderResult.orderId.startsWith('order_mock_')) {
+                console.log("Mock Payment Mode Detected. Simulating success...");
+                setTimeout(async () => {
+                    try {
+                        const ticket = await paymentService.verifyPayment({
+                            razorpayOrderId: orderResult.orderId,
+                            razorpayPaymentId: 'pay_mock_' + Math.random().toString(36).substring(7),
+                            razorpaySignature: 'mock_sig_' + Math.random().toString(36).substring(7),
+                            bookingResource: bookingResource
+                        });
+                        
+                        navigate('/booking-success', {
+                            state: { movie, theatre, show, selectedSeats, amountPayable: finalAmount, ticketCount, bookingId: ticket.id }
+                        });
+                    } catch (verifyErr: any) {
+                        setBookingError("Payment verification failed! Please contact support.");
+                        setIsProcessing(false);
+                    }
+                }, 1500);
+                return;
+            }
+
+            // 2. Open Razorpay Checkout
+            const options = {
+                key: orderResult.razorpayKeyId, // Dynamic key from backend
+                amount: orderResult.amount * 100, // paise
+                currency: orderResult.currency,
+                name: "MovieShark Premium",
+                description: `Booking for ${movie.title}`,
+                order_id: orderResult.orderId,
+                handler: async function (response: any) {
+                    try {
+                        setIsProcessing(true);
+                        // 3. Verify on Backend
+                        const ticket = await paymentService.verifyPayment({
+                            razorpayOrderId: response.razorpay_order_id,
+                            razorpayPaymentId: response.razorpay_payment_id,
+                            razorpaySignature: response.razorpay_signature,
+                            bookingResource: bookingResource
+                        });
+                        
+                        navigate('/booking-success', {
+                            state: { movie, theatre, show, selectedSeats, amountPayable: finalAmount, ticketCount, bookingId: ticket.id }
+                        });
+                    } catch (verifyErr: any) {
+                        setBookingError("Payment verification failed! Please contact support.");
+                        setIsProcessing(false);
+                    }
+                },
+                theme: { color: "#ef4444" }
+            };
+
+            const rzp = new (window as any).Razorpay(options);
+            rzp.on('payment.failed', function (response: any){
+                setBookingError("Payment Failed: " + response.error.description);
+                setIsProcessing(false);
             });
+            rzp.open();
         } catch (err: any) {
-            const message = err?.response?.data || err?.message || 'Booking failed. Please try again.';
+            const message = err?.response?.data || err?.message || 'Payment initiation failed. Please try again.';
             setBookingError(message);
-        } finally {
             setIsProcessing(false);
         }
     };
 
     const paymentMethods = [
-        { id: 'UPI', label: 'Pay by any UPI App', icon: <Smartphone className="w-5 h-5" /> },
+        { id: 'UPI', label: 'UPI App', icon: <Smartphone className="w-5 h-5" /> },
         { id: 'Card', label: 'Debit/Credit Card', icon: <CreditCard className="w-5 h-5" /> },
         { id: 'Wallet', label: 'Mobile Wallets', icon: <Wallet className="w-5 h-5" /> },
         { id: 'Gift', label: 'Gift Voucher', icon: <Gift className="w-5 h-5" /> },
         { id: 'NetBanking', label: 'Net Banking', icon: <Monitor className="w-5 h-5" /> },
-        { id: 'PayLater', label: 'Pay Later', icon: <Clock className="w-5 h-5" /> },
-        { id: 'Redeem', label: 'Redeem Points', icon: <Crown className="w-5 h-5" /> },
     ];
 
     return (
-        <div className="bg-slate-50 min-h-screen font-sans text-gray-800 pb-20">
+        <div className="bg-[#0a0a0f] min-h-screen font-sans text-slate-300 pb-20">
 
             {/* Header */}
-            <div className="bg-white p-4 sticky top-0 z-50 shadow-sm border-b border-gray-200">
-                <div className="max-w-7xl mx-auto flex items-center justify-between">
+            <div className="bg-[#0a0a0f]/80 backdrop-blur-xl border-b border-white/10 sticky top-16 z-50">
+                <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
                     <div className="flex items-center gap-4">
-                        <button onClick={() => navigate(-1)} className="hover:bg-gray-100 p-2 rounded-full transition-colors">
-                            <ChevronLeft className="w-6 h-6 text-gray-600" />
+                        <button onClick={() => navigate(-1)} className="bg-white/5 hover:bg-white/10 p-2 rounded-xl border border-white/10 transition-colors group">
+                            <ChevronLeft className="w-6 h-6 text-slate-400 group-hover:text-white" />
                         </button>
                         <div>
-                            <h1 className="font-semibold text-lg flex items-center gap-2">
-                                {movie.title} <span className="text-xs border border-gray-400 rounded px-1 text-gray-500 uppercase">{movie.sensorRating || 'UA'}</span>
+                            <h1 className="font-bold text-xl text-white tracking-tight flex items-center gap-2">
+                                {movie.title} <span className="text-[10px] border border-white/20 rounded-md px-1.5 py-0.5 text-slate-500 uppercase font-bold">{movie.sensorRating || 'UA'}</span>
                             </h1>
-                            <p className="text-xs text-gray-500">
-                                {theatre.name}: {theatre.city} | {new Date(show.showTime).toLocaleDateString()} at {new Date(show.showTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                            <p className="text-[10px] text-slate-500 font-semibold tracking-wide mt-0.5">
+                                {theatre.name} • {new Date(show.showTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true })}
                             </p>
                         </div>
+                    </div>
+                    <div className="hidden sm:flex items-center gap-2 text-emerald-400 font-black text-[10px] tracking-widest uppercase bg-emerald-400/10 px-3 py-1.5 rounded-full border border-emerald-400/20">
+                        <ShieldCheck className="w-4 h-4" /> Secure Checkout
                     </div>
                 </div>
             </div>
 
-            <div className="max-w-7xl mx-auto p-4 md:p-8 grid grid-cols-1 lg:grid-cols-12 gap-8">
+            <div className="max-w-7xl mx-auto p-4 md:p-10 grid grid-cols-1 lg:grid-cols-12 gap-10">
 
-                {/* Left Column: Payment Options (Tabs) */}
-                <div className="lg:col-span-8 bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden flex flex-col md:flex-row min-h-[500px]">
+                {/* Left Column: Payment Options */}
+                <div className="lg:col-span-8 bg-white/5 backdrop-blur-md rounded-3xl border border-white/10 overflow-hidden flex flex-col md:flex-row min-h-[540px]">
                     {/* Sidebar Tabs */}
-                    <div className="w-full md:w-1/3 bg-gray-50 border-r border-gray-200">
-                        <div className="p-4 font-semibold text-gray-500 text-xs uppercase tracking-wider">Payment options</div>
+                    <div className="w-full md:w-1/3 bg-black/20 border-r border-white/10 text-left">
+                        <div className="p-6 font-semibold text-slate-600 text-[10px] uppercase tracking-widest">Select Payment</div>
                         <div className="flex flex-col">
                             {paymentMethods.map(method => (
                                 <button
                                     key={method.id}
                                     onClick={() => setActiveTab(method.id)}
                                     className={`
-                                        flex items-center gap-4 p-4 text-sm font-medium transition-all text-left relative
-                                        ${activeTab === method.id ? 'bg-white text-red-500 shadow-[inset_4px_0_0_0_#ef4444]' : 'text-gray-600 hover:bg-gray-100'}
+                                        flex items-center gap-4 p-5 text-sm font-semibold transition-all text-left relative tracking-tight
+                                        ${activeTab === method.id ? 'bg-red-500 text-white shadow-xl shadow-red-500/20' : 'text-slate-400 hover:bg-white/5'}
                                     `}
                                 >
-                                    <span className={activeTab === method.id ? 'text-red-500' : 'text-gray-400'}>{method.icon}</span>
+                                    <span className={activeTab === method.id ? 'text-white' : 'text-slate-600'}>{method.icon}</span>
                                     {method.label}
                                 </button>
                             ))}
@@ -120,184 +178,169 @@ const BookingSummaryPage: React.FC = () => {
                     </div>
 
                     {/* Tab Content */}
-                    <div className="flex-1 p-8 bg-white">
-                        {activeTab === 'UPI' && (
-                            <div className="animate-in fade-in duration-300">
-                                <h2 className="text-lg font-semibold mb-6">Pay by any UPI App</h2>
+                    <div className="flex-1 p-10">
+                        {activeTab === 'UPI' ? (
+                            <div className="animate-in fade-in slide-in-from-right-4 duration-500">
+                                <h2 className="text-xl font-bold text-white mb-2 uppercase tracking-tight">Pay by UPI</h2>
+                                <p className="text-slate-500 text-xs mb-8 font-medium">Fast, secure, and zero convenience hidden costs.</p>
 
                                 <div className="space-y-4">
-                                    <div className="border border-gray-200 rounded-lg p-4 flex items-center justify-between cursor-pointer hover:bg-gray-50 transition-colors group">
-                                        <div className="flex items-center gap-4">
-                                            <img src="https://cdn-icons-png.flaticon.com/512/6124/6124998.png" alt="GPay" className="w-8 h-8" />
-                                            <span className="font-medium">Google Pay</span>
+                                    <div className="bg-white/5 border border-white/10 rounded-2xl p-5 flex items-center justify-between cursor-pointer hover:bg-white/10 hover:border-red-500/30 transition-all group">
+                                        <div className="flex items-center gap-5">
+                                            <div className="bg-white p-2 rounded-xl">
+                                                <img src="https://cdn-icons-png.flaticon.com/512/6124/6124998.png" alt="GPay" className="w-6 h-6" />
+                                            </div>
+                                            <span className="font-bold text-white text-sm tracking-tight">Google Pay</span>
                                         </div>
-                                        <ChevronRight className="w-5 h-5 text-gray-300 group-hover:text-red-500" />
+                                        <ChevronRight className="w-5 h-5 text-slate-600 group-hover:text-red-500 group-hover:translate-x-1 transition-all" />
                                     </div>
 
-                                    <div className="border border-gray-200 rounded-lg p-4 flex items-center justify-between cursor-pointer hover:bg-gray-50 transition-colors group">
-                                        <div className="flex items-center gap-4">
-                                            <div className="w-8 h-8 rounded-full border border-dashed border-red-300 flex items-center justify-center text-red-500">+</div>
+                                    <div className="bg-white/5 border border-white/10 rounded-2xl p-5 flex items-center justify-between cursor-pointer hover:bg-white/10 hover:border-red-500/30 transition-all group">
+                                        <div className="flex items-center gap-5">
+                                            <div className="w-10 h-10 rounded-xl border border-dashed border-red-500/40 flex items-center justify-center text-red-500 font-bold">+</div>
                                             <div>
-                                                <div className="font-medium text-red-500">Add new UPI ID</div>
-                                                <div className="text-xs text-gray-400">You need to have a registered UPI ID</div>
+                                                <div className="font-bold text-red-400 text-sm tracking-tight">Add new UPI ID</div>
+                                                <div className="text-[10px] text-slate-600 font-semibold tracking-wide">Requires registered VPA</div>
                                             </div>
                                         </div>
-                                        <ChevronRight className="w-5 h-5 text-gray-300 group-hover:text-red-500" />
+                                        <ChevronRight className="w-5 h-5 text-slate-600 group-hover:text-red-500 group-hover:translate-x-1 transition-all" />
                                     </div>
 
-                                    <div className="flex items-center gap-4 my-8">
-                                        <div className="h-px bg-gray-200 flex-1"></div>
-                                        <span className="text-gray-400 text-sm">Or</span>
-                                        <div className="h-px bg-gray-200 flex-1"></div>
+                                    <div className="flex items-center gap-6 my-10">
+                                        <div className="h-px bg-white/10 flex-1"></div>
+                                        <span className="text-slate-600 text-[10px] font-black uppercase tracking-[0.2em]">Or</span>
+                                        <div className="h-px bg-white/10 flex-1"></div>
                                     </div>
 
-                                    <div className="border border-gray-200 rounded-lg p-4 flex items-center justify-between cursor-pointer hover:bg-gray-50 transition-colors group">
-                                        <div className="flex items-center gap-4">
-                                            <img src="https://cdn-icons-png.flaticon.com/512/1041/1041916.png" alt="QR" className="w-8 h-8 opacity-60" />
+                                    <div className="bg-white/5 border border-white/10 rounded-2xl p-5 flex items-center justify-between cursor-pointer hover:bg-white/10 hover:border-red-500/30 transition-all group">
+                                        <div className="flex items-center gap-5">
+                                            <div className="bg-white p-2 rounded-xl">
+                                                <img src="https://cdn-icons-png.flaticon.com/512/1041/1041916.png" alt="QR" className="w-6 h-6" />
+                                            </div>
                                             <div>
-                                                <div className="font-medium">Scan QR code</div>
-                                                <div className="text-xs text-gray-400">Scan using any UPI app</div>
+                                                <div className="font-bold text-white text-sm tracking-tight">Scan QR code</div>
+                                                <div className="text-[10px] text-slate-600 font-semibold tracking-wide">Scan using any UPI App</div>
                                             </div>
                                         </div>
-                                        <ChevronRight className="w-5 h-5 text-gray-300 group-hover:text-red-500" />
+                                        <ChevronRight className="w-5 h-5 text-slate-600 group-hover:text-red-500 group-hover:translate-x-1 transition-all" />
                                     </div>
                                 </div>
                             </div>
-                        )}
-
-                        {activeTab === 'Card' && (
-                            <div className="animate-in fade-in duration-300">
-                                <h2 className="text-lg font-semibold mb-6">Internal Server Error</h2>
-                                <p className="text-gray-500 text-sm">This is a demo. Please use UPI options or simply click proceed.</p>
-                            </div>
-                        )}
-
-                        {/* Placeholder for other tabs */}
-                        {!['UPI', 'Card'].includes(activeTab) && (
-                            <div className="flex flex-col items-center justify-center h-full text-gray-400 animate-in fade-in duration-300">
-                                <Monitor className="w-16 h-16 mb-4 opacity-20" />
-                                <p>Coming Soon</p>
+                        ) : (
+                            <div className="flex flex-col items-center justify-center h-full text-slate-600 animate-in fade-in duration-500">
+                                <Zap className="w-16 h-16 mb-4 opacity-10 text-red-500" />
+                                <h3 className="font-black uppercase tracking-widest text-xs">Payment Method Restricted</h3>
+                                <p className="text-[10px] mt-2 font-bold opacity-50">PLEASE USE UPI FOR INSTANT BOOKING</p>
                             </div>
                         )}
                     </div>
                 </div>
 
                 {/* Right Column: Order Summary */}
-                <div className="lg:col-span-4 space-y-4">
+                <div className="lg:col-span-4 space-y-6">
 
                     {/* Summary Card */}
-                    <div className="bg-white rounded-md shadow-sm border border-gray-200 p-5">
-                        <div className="flex justify-between items-start mb-4">
+                    <div className="bg-white/5 border border-white/10 rounded-3xl p-6 shadow-2xl overflow-hidden relative group">
+                        <div className="absolute -right-10 -top-10 w-32 h-32 bg-red-500/5 rounded-full blur-3xl transition-transform group-hover:scale-150" />
+
+                        <div className="flex justify-between items-start mb-6 border-b border-white/5 pb-6">
                             <div>
-                                <h3 className="font-bold text-red-500 text-lg mb-1">{movie.title}</h3>
-                                <p className="text-sm font-medium text-gray-700 block mb-1">
-                                    {new Date(show.showTime).toLocaleDateString('en-US', { weekday: 'short', day: 'numeric', month: 'short' })} | {new Date(show.showTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                <h3 className="font-bold text-red-500 text-2xl tracking-tight uppercase mb-2 leading-none">{movie.title}</h3>
+                                <p className="text-xs font-semibold text-white flex items-center gap-2 mb-1">
+                                    <Calendar className="w-3.5 h-3.5 text-slate-500" />
+                                    {new Date(show.showTime).toLocaleDateString('en-US', { weekday: 'short', day: 'numeric', month: 'short' })}
                                 </p>
-                                <p className="text-xs text-gray-500 mb-2">{movie.language}, 2D</p>
-                                <div className="text-xs text-gray-500">
-                                    {theatre.name}: {theatre.city}
-                                </div>
+                                <p className="text-xs font-semibold text-white flex items-center gap-2">
+                                    <Clock className="w-3.5 h-3.5 text-slate-500" />
+                                    {new Date(show.showTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true })}
+                                </p>
                             </div>
                             <div className="text-right">
-                                <div className="text-2xl font-light text-gray-400">{ticketCount}</div>
-                                <div className="text-[10px] text-red-500 uppercase font-bold tracking-wide">M-Ticket</div>
+                                <div className="text-4xl font-black text-white/10 border-b border-white/5 pb-1 mb-1">{ticketCount}</div>
+                                <div className="text-[10px] text-red-500 uppercase font-black tracking-widest bg-red-500/10 px-2 py-0.5 rounded-sm">Tickets</div>
                             </div>
                         </div>
 
-                        {/* Cancellation Warning */}
-                        <div className="bg-orange-50 border border-orange-100 rounded px-3 py-2 mb-4">
-                            <h4 className="text-xs font-bold text-orange-800 mb-0.5">Cancellation Unavailable</h4>
-                            <p className="text-[10px] text-orange-700">This venue does not support booking cancellation.</p>
+                        {/* Details */}
+                        <div className="space-y-1 mb-6">
+                            <p className="text-[10px] font-semibold uppercase text-slate-500 tracking-wider">Venue</p>
+                            <p className="text-sm font-semibold text-white">{theatre.name}, {theatre.city}</p>
                         </div>
 
-                        <div className="border-t border-dashed border-gray-200 my-4"></div>
+                        <div className="border-t border-white/5 my-6"></div>
 
                         {/* Pricing */}
-                        <div className="space-y-2 text-sm">
-                            <div className="flex justify-between items-center text-gray-600">
-                                <span>Ticket(s) price</span>
-                                <span className="text-gray-900 font-medium">₹{totalPrice.toFixed(2)}</span>
+                        <div className="space-y-4 text-xs">
+                            <div className="flex justify-between items-center text-slate-400 font-bold uppercase tracking-tight">
+                                <span>Subtotal</span>
+                                <span className="text-white">₹{totalPrice.toFixed(2)}</span>
                             </div>
-                            <div className="flex justify-between items-center text-gray-600">
-                                <span className="flex items-center gap-1">Convenience fees <ChevronDown className="w-3 h-3" /></span>
-                                <span className="text-gray-900 font-medium">₹{baseConvenienceFee.toFixed(2)}</span>
+                            <div className="flex justify-between items-center text-slate-400 font-bold uppercase tracking-tight">
+                                <span className="flex items-center gap-1.5">Fees <ChevronDown className="w-3 h-3 text-slate-600" /></span>
+                                <span className="text-white">₹{baseConvenienceFee.toFixed(2)}</span>
                             </div>
 
-                            <div className="flex justify-between items-center text-gray-600 mt-3 pt-3 border-t border-dashed border-gray-200">
+                            <div className="flex justify-between items-center bg-white/5 p-4 rounded-2xl border border-white/5">
                                 <div>
-                                    <div className="font-medium text-gray-800">Donate to Charity</div>
-                                    <div className="text-[10px] text-gray-400">(₹1 per ticket) <span className="underline cursor-pointer">View T&C</span></div>
+                                    <div className="font-bold text-white text-xs tracking-tight">Charity Donation</div>
+                                    <div className="text-[9px] text-slate-500 font-semibold uppercase mt-0.5 tracking-wide">Supporting foundations</div>
                                 </div>
-                                <div className="flex items-center gap-2">
-                                    <span className="text-gray-900 font-medium">₹{donation.toFixed(2)}</span>
+                                <div className="flex items-center gap-3">
+                                    <span className="text-white font-black">₹{donation.toFixed(2)}</span>
                                     <button
                                         onClick={() => setIsDonationActive(!isDonationActive)}
-                                        className={`w-4 h-4 rounded border flex items-center justify-center ${isDonationActive ? 'bg-red-500 border-red-500' : 'border-gray-300'}`}
+                                        className={`w-5 h-5 rounded-lg border flex items-center justify-center transition-all ${isDonationActive ? 'bg-red-500 border-red-500' : 'bg-transparent border-white/20 hover:border-white/40'}`}
                                     >
-                                        {isDonationActive && <CheckCircle2 className="w-3 h-3 text-white" />}
+                                        {isDonationActive && <CheckCircle2 className="w-3.5 h-3.5 text-white" />}
                                     </button>
                                 </div>
                             </div>
                         </div>
 
-                        <div className="border-t border-gray-200 my-4 pt-4 flex justify-between items-center bg-yellow-50 -mx-5 -mb-5 px-5 py-3 mt-4 border-b rounded-b-md">
-                            <span className="font-bold text-gray-800">Order Total</span>
-                            <span className="font-bold text-gray-900 text-lg">₹{finalAmount.toFixed(2)}</span>
+                        {/* Total */}
+                        <div className="mt-8 bg-gradient-to-r from-red-600/20 to-transparent -mx-6 -mb-6 p-6 flex justify-between items-center border-t border-white/10">
+                            <div>
+                                <span className="font-semibold text-slate-500 text-[10px] uppercase tracking-widest block mb-1">Total Payable</span>
+                                <span className="font-bold text-white text-3xl tracking-tight">₹{finalAmount.toFixed(2)}</span>
+                            </div>
                         </div>
                     </div>
 
                     {/* Contact Details */}
-                    <div className="bg-white rounded-md shadow-sm border border-gray-200 p-4 relative">
-                        <div className="flex justify-between items-start mb-2">
-                            <h3 className="text-sm font-bold text-gray-800">For Sending Booking Details</h3>
-                            <button className="text-red-500 text-xs font-semibold flex items-center gap-1 hover:underline">Edit</button>
+                    <div className="bg-white/5 border border-white/10 rounded-2xl p-5 group hover:border-white/20 transition-all text-left">
+                        <div className="flex justify-between items-center mb-1">
+                            <h3 className="text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Booking Recipient</h3>
+                            <button className="text-red-500 text-[10px] font-bold uppercase hover:text-red-400 transition-colors">Edit</button>
                         </div>
-                        <p className="text-xs text-gray-600 mb-1">+91 9876543210  |  manik@example.com</p>
-                        <p className="text-[10px] text-gray-400">Tamil Nadu (for GST purposes)</p>
-                    </div>
-
-                    {/* Offers */}
-                    <div className="bg-white rounded-md shadow-sm border border-gray-200 p-4 flex justify-between items-center cursor-pointer hover:bg-gray-50">
-                        <div className="flex items-center gap-2">
-                            <div className="w-5 h-5 rounded-full bg-yellow-400 flex items-center justify-center text-[10px] font-bold text-white">%</div>
-                            <span className="text-sm font-bold text-gray-800">Apply Offers</span>
-                        </div>
-                        <ChevronRight className="w-4 h-4 text-gray-400" />
+                        <p className="text-sm font-semibold text-white tracking-tight leading-none">+91 9876543210</p>
+                        <p className="text-[10px] text-slate-500 font-semibold mt-2 tracking-tight">manik@example.com</p>
                     </div>
 
                     {/* Disclaimer */}
-                    <p className="text-[10px] text-gray-500 mt-4 px-2">
-                        By proceeding, I express my consent to complete this transaction.
+                    <p className="text-[9px] text-slate-600 mt-6 px-4 font-bold uppercase tracking-widest text-center">
+                        Secure transaction powered by MovieShark Logic
                     </p>
 
                     {/* Error Message */}
                     {bookingError && (
-                        <div className="mt-3 bg-red-50 border border-red-200 rounded-lg p-3 text-sm text-red-700">
+                        <div className="animate-in zoom-in-95 duration-300 bg-red-500/10 border border-red-500/20 rounded-2xl p-4 text-[10px] text-red-400 font-black uppercase tracking-wider text-center">
                             ⚠️ {bookingError}
                         </div>
                     )}
 
-                    {/* Amount Payable - Sticky for Mobile */}
-                    <div className="mt-4 bg-white md:bg-transparent p-4 md:p-0 border-t md:border-0 fixed md:static bottom-0 left-0 right-0 z-50 flex justify-between items-center shadow-lg md:shadow-none">
-                        <div className="md:hidden">
-                            <div className="text-xs text-gray-500">Amount Payable</div>
-                            <div className="text-xl font-bold">₹{finalAmount.toFixed(2)}</div>
-                        </div>
-                        <button
-                            onClick={handlePayment}
-                            disabled={isProcessing}
-                            className="bg-red-500 hover:bg-red-600 disabled:bg-red-300 text-white font-bold py-3 px-8 rounded-lg shadow-lg shadow-red-500/30 w-full md:w-auto transition-transform active:scale-95 flex items-center justify-center gap-2"
-                        >
-                            {isProcessing ? (
-                                <><Loader2 className="w-4 h-4 animate-spin" /> Processing...</>
-                            ) : (
-                                <>
-                                    <span className="md:hidden">Proceed</span>
-                                    <span className="hidden md:inline">Amount Payable ₹{finalAmount.toFixed(2)}</span>
-                                </>
-                            )}
-                        </button>
-                    </div>
+                    {/* Proceed Button */}
+                    <button
+                        onClick={handlePayment}
+                        disabled={isProcessing}
+                        className="w-full relative group/pay overflow-hidden bg-red-500 hover:bg-red-600 disabled:bg-red-900/50 text-white font-bold py-5 rounded-3xl shadow-2xl shadow-red-500/20 transition-all hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-3 tracking-tight text-lg"
+                    >
+                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover/pay:translate-x-full transition-transform duration-1000" />
+                        {isProcessing ? (
+                            <><Loader2 className="w-5 h-5 animate-spin" /> Authorizing...</>
+                        ) : (
+                            <>Proceed To Pay ₹{finalAmount.toFixed(2)}</>
+                        )}
+                    </button>
 
                 </div>
 

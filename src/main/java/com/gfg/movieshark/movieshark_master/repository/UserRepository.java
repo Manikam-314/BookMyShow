@@ -11,5 +11,8 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
 	User findByName(String name);
 
-	User findByEmail(String email);
+	// Safe version — always returns single latest user even when duplicates exist
+	User findTopByEmailOrderByIdDesc(String email);
+
+	boolean existsByEmail(String email);
 }

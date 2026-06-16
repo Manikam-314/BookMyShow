@@ -16,6 +16,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import jakarta.persistence.*;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -69,13 +70,18 @@ public class User implements UserDetails {
 				.name(user.getName())
 				.mobile(user.getMobile())
 				.email(user.getEmail())
+				.role(user.getRole())
 				.tickets(Ticket.toResource(user.getTicketEntities()))
 				.build();
 	}
 
 	@Override
 	public Collection<? extends GrantedAuthority> getAuthorities() {
-		return Arrays.stream(this.role.toString().split(",")).map(SimpleGrantedAuthority::new)
+		if (this.role == null) {
+			return Collections.singletonList(new SimpleGrantedAuthority("ROLE_USER"));
+		}
+		return Arrays.stream(this.role.toString().split(","))
+				.map(role -> new SimpleGrantedAuthority("ROLE_" + role.trim()))
 				.collect(Collectors.toList());
 	}
 
@@ -87,7 +93,7 @@ public class User implements UserDetails {
 
 	@Override
 	public String getUsername() {
-		return name;
+		return email; // JWT subject must be the email — JwtAuthService looks up by email
 	}
 
 	@Override

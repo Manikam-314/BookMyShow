@@ -69,6 +69,8 @@ public class ShowService {
 
 		show.setMovie(optionalMovie.get());
 		show.setTheater(optionalTheater.get());
+		show.setMinPrice(showResource.getMinPrice());
+		show.setMaxPrice(showResource.getMaxPrice());
 
 		// Pass prices to generate seats
 		show.setSeats(generateShowSeats(show.getTheater().getSeats(), show, showResource.getMinPrice(),
@@ -76,7 +78,10 @@ public class ShowService {
 
 		show = showsRepository.save(show);
 
-		return Show.toResource(show);
+		ShowResource result = Show.toResource(show);
+		result.setBookedSeatsCount(0);
+		result.setTotalSeatsCount(show.getSeats().size());
+		return result;
 	}
 
 	private List<ShowSeat> generateShowSeats(
@@ -85,66 +90,95 @@ public class ShowService {
 
 		List<ShowSeat> showSeatsEntities = new ArrayList<>();
 
-		if (CollectionUtils.isEmpty(theaterSeatsEntities)) {
-			return showSeatsEntities;
-		}
-
-		for (TheaterSeats theaterSeats : theaterSeatsEntities) {
-
-			ShowSeat showSeat = ShowSeat.builder()
-					.seatNumber(theaterSeats.getSeatNumber())
-					.seatType(theaterSeats.getSeatType())
-					.rate(theaterSeats.getSeatType() == SeatType.RECLINER ? maxPrice : minPrice)
-					.booked(false)
-					.show(show)
-					.build();
-
-			showSeatsEntities.add(showSeat);
+		if (!CollectionUtils.isEmpty(theaterSeatsEntities)) {
+			// Theater has explicit seat config — use it
+			for (TheaterSeats theaterSeats : theaterSeatsEntities) {
+				ShowSeat showSeat = ShowSeat.builder()
+						.seatNumber(theaterSeats.getSeatNumber())
+						.seatType(theaterSeats.getSeatType())
+						.rate(theaterSeats.getSeatType() == SeatType.RECLINER ? maxPrice : minPrice)
+						.booked(false)
+						.show(show)
+						.build();
+				showSeatsEntities.add(showSeat);
+			}
+		} else {
+			// No TheaterSeats rows (auto-created theater) — generate grid from totalRows ×
+			// totalColumns
+			Theater theater = show.getTheater();
+			int rows = theater.getTotalRows() != null ? theater.getTotalRows() : 10;
+			int cols = theater.getTotalColumns() != null ? theater.getTotalColumns() : 15;
+			for (int r = 0; r < rows; r++) {
+				char rowChar = (char) ('A' + r);
+				SeatType type = r < 2 ? SeatType.RECLINER : SeatType.REGULAR;
+				int price = type == SeatType.RECLINER ? maxPrice : minPrice;
+				for (int c = 1; c <= cols; c++) {
+					ShowSeat showSeat = ShowSeat.builder()
+							.seatNumber(rowChar + String.valueOf(c))
+							.seatType(type)
+							.rate(price)
+							.booked(false)
+							.show(show)
+							.build();
+					showSeatsEntities.add(showSeat);
+				}
+			}
 		}
 
 		return showSeatsEntities;
 	}
 
 	public List<String> getAvailableSlots(long theaterId, String date) {
+		log.info("Fetching available slots for Theater ID: {}, Date: {}", theaterId, date);
 		Optional<Theater> optionalTheater = theaterRepository.findById(theaterId);
 		if (optionalTheater.isEmpty()) {
 			throw new NotFoundException("Theater Not Found");
 		}
 		Theater theater = optionalTheater.get();
 		String timingsStr = theater.getShowTimings();
+		log.info("Theater found: {}. Preferred timings: {}", theater.getName(), timingsStr);
+
 		if (!StringUtils.hasText(timingsStr)) {
+			log.info("No preferred timings found for theater: {}", theater.getName());
 			return new ArrayList<>();
 		}
 
 		String[] timingsArray = timingsStr.split(",");
 		List<String> standardTimings = new ArrayList<>();
-		// Handle potentially different input formats like "9:30" or "09:30"
-		java.time.format.DateTimeFormatter inputFormatter = java.time.format.DateTimeFormatter
-				.ofPattern("[H:mm][HH:mm]");
+
+		// More robust formatter to handle H:mm, HH:mm, or HH:mm:ss
+		java.time.format.DateTimeFormatter inputFormatter = new java.time.format.DateTimeFormatterBuilder()
+				.appendPattern("[H:mm][HH:mm]")
+				.appendOptional(java.time.format.DateTimeFormatter.ofPattern(":ss"))
+				.toFormatter();
 		java.time.format.DateTimeFormatter outputFormatter = java.time.format.DateTimeFormatter.ofPattern("HH:mm");
 
 		for (String t : timingsArray) {
 			try {
-				java.time.LocalTime time = java.time.LocalTime.parse(t.trim(), inputFormatter);
-				standardTimings.add(time.format(outputFormatter));
+				if (StringUtils.hasText(t)) {
+					java.time.LocalTime time = java.time.LocalTime.parse(t.trim(), inputFormatter);
+					standardTimings.add(time.format(outputFormatter));
+				}
 			} catch (Exception e) {
-				log.warn("Skipping invalid time format in theater config: " + t);
+				log.warn("Skipping invalid time format in theater config: '{}'. Error: {}", t, e.getMessage());
 			}
 		}
+		log.info("Parsed standard timings: {}", standardTimings);
 
-		// Fetch existing shows for this theater and date
-		List<Show> existingShows = showsRepository.findAll().stream()
-				.filter(s -> s.getTheater().getId().equals(theaterId))
-				.filter(s -> s.getShowTime().toString().startsWith(date))
-				.collect(Collectors.toList());
+		// Fetch existing shows for this theater and date prefix
+		List<Show> existingShows = showsRepository.findByTheaterIdAndShowTimeStartingWith(theaterId, date);
 
 		List<String> bookedTimes = existingShows.stream()
+				.filter(s -> s.getShowTime() != null)
 				.map(s -> s.getShowTime().toLocalTime().format(outputFormatter))
 				.collect(Collectors.toList());
+		log.info("Booked timings for date {}: {}", date, bookedTimes);
 
-		return standardTimings.stream()
-				.filter(t -> !bookedTimes.contains(t))
-				.collect(Collectors.toList());
+		List<String> available = new ArrayList<>(standardTimings);
+		available.removeAll(bookedTimes);
+		log.info("Returning available slots: {}", available);
+
+		return available;
 	}
 
 	public List<ShowResource> searchShows(String movieName, String cityName, String theaterName) {
@@ -173,7 +207,15 @@ public class ShowService {
 		if (CollectionUtils.isEmpty(shows))
 			return new ArrayList<>();
 		else
-			return shows.stream().map(Show::toResource).collect(Collectors.toList());
+			return shows.stream().map(s -> {
+				ShowResource res = Show.toResource(s);
+				if (s.getSeats() != null) {
+					res.setTotalSeatsCount(s.getSeats().size());
+					res.setBookedSeatsCount((int) s.getSeats().stream()
+							.filter(com.gfg.movieshark.movieshark_master.domain.ShowSeat::isBooked).count());
+				}
+				return res;
+			}).collect(Collectors.toList());
 	}
 
 	public List<ShowSeatsResource> getShowSeats(long showId) {
@@ -183,7 +225,22 @@ public class ShowService {
 			throw new NotFoundException("Show Not Found with ID: " + showId);
 		}
 
-		return ShowSeat.toResource(optionalShow.get().getSeats());
+		Show show = optionalShow.get();
+
+		// If this show has no seats (e.g. created before auto-seat generation),
+		// generate and save them now
+		if (CollectionUtils.isEmpty(show.getSeats())) {
+			ShowResource showResource = Show.toResource(show);
+			int minP = showResource.getMinPrice() > 0 ? showResource.getMinPrice() : 80;
+			int maxP = showResource.getMaxPrice() > 0 ? showResource.getMaxPrice() : 200;
+			List<ShowSeat> generated = generateShowSeats(
+					show.getTheater().getSeats(), show, minP, maxP);
+			show.setSeats(generated);
+			show = showsRepository.save(show);
+			log.info("Auto-generated {} seats for existing show {}", generated.size(), showId);
+		}
+
+		return ShowSeat.toResource(show.getSeats());
 	}
 
 	public ShowResource getShowById(long id) {
@@ -192,6 +249,22 @@ public class ShowService {
 			throw new NotFoundException("Show Not Found with ID: " + id);
 		}
 		return Show.toResource(optionalShow.get());
+	}
+
+	public List<ShowResource> getAllShows() {
+		List<Show> shows = showsRepository.findAll();
+		if (CollectionUtils.isEmpty(shows))
+			return new ArrayList<>();
+		else
+			return shows.stream().map(s -> {
+				ShowResource res = Show.toResource(s);
+				if (s.getSeats() != null) {
+					res.setTotalSeatsCount(s.getSeats().size());
+					res.setBookedSeatsCount((int) s.getSeats().stream()
+							.filter(com.gfg.movieshark.movieshark_master.domain.ShowSeat::isBooked).count());
+				}
+				return res;
+			}).collect(Collectors.toList());
 	}
 
 }

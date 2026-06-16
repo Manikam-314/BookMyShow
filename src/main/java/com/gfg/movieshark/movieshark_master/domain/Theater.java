@@ -10,8 +10,6 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
-import jakarta.persistence.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -42,8 +40,13 @@ public class Theater {
 	@Column(name = "total_columns")
 	private Integer totalColumns;
 
+	@Column(name = "seats_configured")
+	@Builder.Default
+	private Boolean seatsConfigured = false;
+
 	@Transient
-	private Integer capacity;
+	@Builder.Default
+	private Integer capacity = 0;
 
 	@Column(name = "show_timings")
 	private String showTimings; // Comma separated: "10:00,14:00,18:00"
@@ -53,7 +56,7 @@ public class Theater {
 	@Builder.Default
 	private List<Show> shows = new ArrayList<>();
 
-	@OneToMany(mappedBy = "theater", cascade = CascadeType.ALL)
+	@OneToMany(mappedBy = "theater", cascade = CascadeType.ALL, orphanRemoval = true)
 	@JsonIgnore
 	@Builder.Default
 	private List<TheaterSeats> seats = new ArrayList<>();
@@ -66,6 +69,7 @@ public class Theater {
 				.address(theaterResource.getAddress())
 				.totalRows(theaterResource.getTotalRows())
 				.totalColumns(theaterResource.getTotalColumns())
+				.seatsConfigured(Boolean.TRUE.equals(theaterResource.isSeatsConfigured()))
 				.showTimings(theaterResource.getShowTimings())
 				.build();
 	}
@@ -81,6 +85,7 @@ public class Theater {
 				.totalColumns(theater.getTotalColumns() != null ? theater.getTotalColumns() : 15) // Default for
 																									// existing data
 				.capacity(theater.getCapacity())
+				.seatsConfigured(Boolean.TRUE.equals(theater.getSeatsConfigured()))
 				.showTimings(theater.getShowTimings())
 				.build();
 	}

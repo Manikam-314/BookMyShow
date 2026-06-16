@@ -21,6 +21,9 @@ export interface Theatre {
     address: string;
     facilities?: string[];
     showTimings?: string; // Comma separated: "10:00,14:00"
+    seatsConfigured: boolean;
+    totalRows: number;
+    totalColumns: number;
 }
 
 export interface Show {
@@ -44,4 +47,16 @@ export interface ShowSeat {
     type: 'RECLINER' | 'FIRST_CLASS' | 'SECOND_CLASS';
     price: number;
     status: 'AVAILABLE' | 'BOOKED' | 'LOCKED' | 'SOLD';
+}
+
+export interface MovieIndex {
+    id: string; // "movieId_theaterId"
+    movieId: number;
+    movieTitle: string;
+    genre: string;
+    rating: number;
+    theaterId: number;
+    theaterName: string;
+    city: string;
+    address: string;
 }

@@ -51,21 +51,31 @@ public class Show {
 	@Column(name = "updated_at")
 	private Date updatedAt;
 
-	@ManyToOne
-	@JsonIgnore
-	private Movie movie;
+	@Column(name = "min_price", nullable = false)
+	private int minPrice = 0;
+
+	@Column(name = "max_price", nullable = false)
+	private int maxPrice = 0;
 
 	@ManyToOne
 	@JsonIgnore
-	private Theater theater;
+	@Builder.Default
+	private Movie movie = null;
+
+	@ManyToOne
+	@JsonIgnore
+	@Builder.Default
+	private Theater theater = null;
 
 	@OneToMany(mappedBy = "show", cascade = CascadeType.ALL)
 	@JsonIgnore
-	private List<Ticket> tickets;
+	@Builder.Default
+	private List<Ticket> tickets = new ArrayList<>();
 
 	@OneToMany(mappedBy = "show", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
 	@JsonIgnore
-	private List<ShowSeat> seats;
+	@Builder.Default
+	private List<ShowSeat> seats = new ArrayList<>();
 
 	public static List<ShowResource> toResource(List<Show> show) {
 
@@ -89,6 +99,8 @@ public class Show {
 						: new ArrayList<>())
 				.createdAt(show.getCreatedAt())
 				.updatedAt(show.getUpdatedAt())
+				.minPrice(show.getMinPrice())
+				.maxPrice(show.getMaxPrice())
 				.build();
 	}
 
@@ -98,6 +110,8 @@ public class Show {
 				.showTime(showResource.getShowTime())
 				.movie(Movie.builder().id(showResource.getMovieId()).build())
 				.theater(Theater.builder().id(showResource.getTheaterId()).build())
+				.minPrice(showResource.getMinPrice())
+				.maxPrice(showResource.getMaxPrice())
 				.build();
 	}
 

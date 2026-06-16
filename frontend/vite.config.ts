@@ -5,8 +5,11 @@ import tailwindcss from '@tailwindcss/vite'
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react(), tailwindcss()],
+  define: {
+    global: 'window',
+    'process.env': {}
+  },
   server: {
-    port: 5173,
-    strictPort: true, // Fail if port is in use, don't switch
+    port: 5174,
   }
 })
