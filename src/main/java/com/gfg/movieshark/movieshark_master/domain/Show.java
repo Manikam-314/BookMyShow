@@ -24,7 +24,6 @@ import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
 
-
 @Data
 @Entity
 @Table(name = "shows")
@@ -37,11 +36,10 @@ public class Show {
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
 
-
-	@JsonFormat(shape=JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss[.SSS][.SS][.S]")
+	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss[.SSS][.SS][.S]")
 	@JsonSerialize(using = LocalDateTimeSerializer.class)
 	@JsonDeserialize(using = LocalDateTimeDeserializer.class)
-    @Column(name = "show_time", nullable = false)
+	@Column(name = "show_time", nullable = false)
 	private LocalDateTime showTime;
 
 	@Temporal(TemporalType.TIMESTAMP)
@@ -53,22 +51,31 @@ public class Show {
 	@Column(name = "updated_at")
 	private Date updatedAt;
 
-	@ManyToOne
-	@JsonIgnore
-	private Movie movie;
+	@Column(name = "min_price", nullable = false)
+	private int minPrice = 0;
+
+	@Column(name = "max_price", nullable = false)
+	private int maxPrice = 0;
 
 	@ManyToOne
 	@JsonIgnore
-	private Theater theater;
+	@Builder.Default
+	private Movie movie = null;
+
+	@ManyToOne
+	@JsonIgnore
+	@Builder.Default
+	private Theater theater = null;
 
 	@OneToMany(mappedBy = "show", cascade = CascadeType.ALL)
 	@JsonIgnore
-	private List<Ticket> tickets;
+	@Builder.Default
+	private List<Ticket> tickets = new ArrayList<>();
 
-    @OneToMany(mappedBy = "show", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+	@OneToMany(mappedBy = "show", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
 	@JsonIgnore
-	private List<ShowSeat> seats;
-
+	@Builder.Default
+	private List<ShowSeat> seats = new ArrayList<>();
 
 	public static List<ShowResource> toResource(List<Show> show) {
 
@@ -79,28 +86,33 @@ public class Show {
 		return new ArrayList<>();
 	}
 
-    public static ShowResource toResource(Show show) {
-        return ShowResource.builder()
-                .id(show.getId())
-                .showTime(show.getShowTime())
-                .movieId(show.getMovie() != null ? show.getMovie().getId() : null)
-                .theaterId(show.getTheater() != null ? show.getTheater().getId() : null)
-                .seats(show.getSeats() != null
-                        ? ShowSeat.toResource(show.getSeats())
-                        : new ArrayList<>())
-                .createdAt(show.getCreatedAt())
-                .updatedAt(show.getUpdatedAt())
-                .build();
-    }
+	public static ShowResource toResource(Show show) {
+		return ShowResource.builder()
+				.id(show.getId())
+				.showTime(show.getShowTime())
+				.movieId(show.getMovie() != null ? show.getMovie().getId() : null)
+				.movieResource(show.getMovie() != null ? Movie.toResource(show.getMovie()) : null)
+				.theaterId(show.getTheater() != null ? show.getTheater().getId() : null)
+				.theaterResource(show.getTheater() != null ? Theater.toResource(show.getTheater()) : null)
+				.seats(show.getSeats() != null
+						? ShowSeat.toResource(show.getSeats())
+						: new ArrayList<>())
+				.createdAt(show.getCreatedAt())
+				.updatedAt(show.getUpdatedAt())
+				.minPrice(show.getMinPrice())
+				.maxPrice(show.getMaxPrice())
+				.build();
+	}
 
+	public static Show toEntity(ShowResource showResource) {
 
-    public static Show toEntity(ShowResource showResource) {
-
-        return Show.builder()
-                .showTime(showResource.getShowTime())
-                .movie(Movie.builder().id(showResource.getMovieId()).build())
-                .theater(Theater.builder().id(showResource.getTheaterId()).build())
-                .build();
-    }
+		return Show.builder()
+				.showTime(showResource.getShowTime())
+				.movie(Movie.builder().id(showResource.getMovieId()).build())
+				.theater(Theater.builder().id(showResource.getTheaterId()).build())
+				.minPrice(showResource.getMinPrice())
+				.maxPrice(showResource.getMaxPrice())
+				.build();
+	}
 
 }

@@ -120,6 +120,7 @@ import com.gfg.movieshark.movieshark_master.domain.Ticket;
 import com.gfg.movieshark.movieshark_master.domain.User;
 import com.gfg.movieshark.movieshark_master.exception.NotFoundException;
 import com.gfg.movieshark.movieshark_master.repository.ShowRepository;
+import com.gfg.movieshark.movieshark_master.repository.ShowSeatsRepository;
 import com.gfg.movieshark.movieshark_master.repository.TicketRepository;
 import com.gfg.movieshark.movieshark_master.repository.UserRepository;
 import com.gfg.movieshark.movieshark_master.resource.BookingResource;
@@ -127,6 +128,7 @@ import com.gfg.movieshark.movieshark_master.resource.TicketMessage;
 import com.gfg.movieshark.movieshark_master.resource.TicketResource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 
 import jakarta.persistence.EntityNotFoundException;
@@ -145,12 +147,15 @@ public class TicketService {
     @Autowired
     private TicketRepository ticketRepository;
 
-    // ✅ ADD THIS
+    @Autowired
+    private ShowSeatsRepository showSeatsRepository;
+
     @Autowired
     private NotificationService notificationService;
 
     ObjectMapper mapper = new ObjectMapper();
 
+    @Transactional
     public TicketResource bookTicket(BookingResource bookingResource) {
 
         Optional<User> optionalUser = userRepository.findById(bookingResource.getUserId());
@@ -169,25 +174,21 @@ public class TicketService {
 
         List<ShowSeat> showSeatsEntities = optionalShow.get().getSeats();
 
-        showSeatsEntities =
-                showSeatsEntities.stream()
-                        .filter(seat ->
-                                seat.getSeatType().equals(bookingResource.getSeatType())
-                                        && !seat.isBooked()
-                                        && requestedSeats.contains(seat.getSeatNumber())
-                        )
-                        .collect(Collectors.toList());
+        showSeatsEntities = showSeatsEntities.stream()
+                .filter(seat -> seat.getSeatType().equals(bookingResource.getSeatType())
+                        && !seat.isBooked()
+                        && requestedSeats.contains(seat.getSeatNumber()))
+                .collect(Collectors.toList());
 
         if (showSeatsEntities.size() != requestedSeats.size()) {
             throw new NotFoundException("Seats Not Available for Booking");
         }
 
-        Ticket ticket =
-                Ticket.builder()
-                        .user(optionalUser.get())
-                        .show(optionalShow.get())
-                        .seats(showSeatsEntities)
-                        .build();
+        Ticket ticket = Ticket.builder()
+                .user(optionalUser.get())
+                .show(optionalShow.get())
+                .seats(showSeatsEntities)
+                .build();
 
         double amount = 0.0;
         String allotedSeats = "";
@@ -216,6 +217,11 @@ public class TicketService {
 
         optionalShow.get().getTickets().add(ticket);
 
+        // ✅ EXPLICITLY SAVE SEATS to mark is_booked=true in show_seats table
+        // This is the critical fix: without this, booked seats remain AVAILABLE on
+        // reload
+        showSeatsRepository.saveAll(showSeatsEntities);
+
         // ✅ SAVE TICKET
         ticket = ticketRepository.save(ticket);
 
@@ -226,7 +232,12 @@ public class TicketService {
         message.setShow(optionalShow.get().getShowTime().toString());
         message.setSeats(allotedSeats);
 
-        notificationService.sendNotification(message);
+        try {
+            notificationService.sendNotification(message);
+        } catch (Exception e) {
+            // Log but don't fail booking
+            System.err.println("Notification failed: " + e.getMessage());
+        }
 
         return Ticket.toResource(ticket);
     }

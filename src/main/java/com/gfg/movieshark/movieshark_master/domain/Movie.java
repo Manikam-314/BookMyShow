@@ -32,6 +32,16 @@ public class Movie {
 
 	private Double rating;
 
+	@Lob
+	@Column(name = "image_url", columnDefinition = "LONGTEXT")
+	private String imageUrl;
+
+	@Lob
+	@Column(name = "banner_url", columnDefinition = "LONGTEXT")
+	private String bannerUrl;
+
+	private String votes;
+
 	@OneToMany(mappedBy = "movie")
 	private List<Review> reviews;
 
@@ -45,6 +55,10 @@ public class Movie {
 		return Movie.builder()
 				.title(movieRequest.getTitle())
 				.genre(movieRequest.getGenre())
+				.rating(movieRequest.getRating())
+				.imageUrl(movieRequest.getImageUrl())
+				.bannerUrl(movieRequest.getBannerUrl())
+				.votes(movieRequest.getVotes())
 				.build();
 
 	}
@@ -55,7 +69,10 @@ public class Movie {
 				.id(movie.getId())
 				.title(movie.getTitle())
 				.genre(movie.getGenre())
-				.reviews(Review.toResource(movie.getReviews()))
+				.rating(movie.getRating())
+				.imageUrl(movie.getImageUrl())
+				.bannerUrl(movie.getBannerUrl())
+				.votes(movie.getVotes())
 				.build();
 	}
 }

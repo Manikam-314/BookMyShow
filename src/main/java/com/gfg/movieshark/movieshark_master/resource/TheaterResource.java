@@ -1,6 +1,5 @@
 package com.gfg.movieshark.movieshark_master.resource;
 
-
 import lombok.*;
 
 import java.util.List;
@@ -20,6 +19,16 @@ public class TheaterResource {
 	private String city;
 
 	private String address;
+
+	private int totalRows;
+
+	private int totalColumns;
+
+	private int capacity;
+
+	private boolean seatsConfigured;
+
+	private String showTimings;
 
 	private List<ShowResource> shows;
 }

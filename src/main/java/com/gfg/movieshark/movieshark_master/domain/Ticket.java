@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.gfg.movieshark.movieshark_master.resource.TicketResource;
 import jakarta.persistence.*;
 import lombok.*;
+import lombok.ToString;
 import org.hibernate.annotations.CreationTimestamp;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import org.springframework.util.CollectionUtils;
@@ -39,19 +40,22 @@ public class Ticket {
 
     @ManyToOne
     @JsonIgnore
+    @ToString.Exclude
     private User user;
 
     @ManyToOne
     @JsonIgnore
+    @ToString.Exclude
     private Show show;
 
     // ✅ FIXED HERE
     @OneToMany(mappedBy = "ticket", cascade = CascadeType.ALL)
     @JsonIgnore
+    @ToString.Exclude
     private List<ShowSeat> seats;
 
-    public static List<TicketResource> toResource(List<Ticket> tickets){
-        if(CollectionUtils.isEmpty(tickets))
+    public static List<TicketResource> toResource(List<Ticket> tickets) {
+        if (CollectionUtils.isEmpty(tickets))
             return new ArrayList<>();
         return tickets.stream().map(Ticket::toResource).collect(Collectors.toList());
     }

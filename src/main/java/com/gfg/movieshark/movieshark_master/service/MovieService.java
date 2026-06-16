@@ -1,6 +1,5 @@
 package com.gfg.movieshark.movieshark_master.service;
 
-
 import com.gfg.movieshark.movieshark_master.domain.Movie;
 import com.gfg.movieshark.movieshark_master.exception.NotFoundException;
 import com.gfg.movieshark.movieshark_master.repository.MovieRepository;
@@ -18,30 +17,26 @@ import java.util.Optional;
 @Service
 public class MovieService {
 
-
-
 	@Autowired
 	private MovieRepository movieRepository;
-
 
 	public MovieResource addMovie(MovieResource movieRequest) {
 
 		Movie movie = Movie.toEntity(movieRequest);
 
 		if (movieRepository.existsByTitle(movieRequest.getTitle())) {
-				return Movie.toResource(movie);
+			return Movie.toResource(movieRepository.findByTitle(movieRequest.getTitle()));
 		}
 
 		movie = movieRepository.save(movie);
 
-		log.info("Added New Movie"+ movie.toString());
+		log.info("Added New Movie" + movie.toString());
 
 		return Movie.toResource(movie);
 	}
 
-
 	public MovieResource getMovie(long id) {
-		//add id check if valid
+		// add id check if valid
 		Optional<Movie> movie = movieRepository.findById(id);
 
 		if (movie.isEmpty()) {
@@ -50,15 +45,16 @@ public class MovieService {
 
 		return Movie.toResource(movie.get());
 	}
-    public List<MovieResource> getAllMovies() {
-        return movieRepository.findAll()
-                .stream()
-                .map(Movie::toResource)
-                .toList(); // Java 16+
-    }
+
+	public List<MovieResource> getAllMovies() {
+		return movieRepository.findAll()
+				.stream()
+				.map(Movie::toResource)
+				.toList(); // Java 16+
+	}
 
 	public MovieResource getMovie(String title) {
-		//add id check if valid
+		// add id check if valid
 		Movie movie = movieRepository.findByTitle(title);
 
 		if (Objects.isNull(movie)) {
