@@ -15,7 +15,7 @@ import java.util.stream.Collectors;
 
 @Data
 @Entity
-@Table(name="review_table")
+@Table(name = "review_table")
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
@@ -23,7 +23,7 @@ import java.util.stream.Collectors;
 public class Review {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     private String movieReview;
@@ -31,7 +31,7 @@ public class Review {
     private double rating;
 
     @ManyToOne
-    @JoinColumn(name="movie_id", nullable=false)
+    @JoinColumn(name = "movie_id", nullable = false)
     @JsonIgnore
     private Movie movie;
 
@@ -40,7 +40,6 @@ public class Review {
 
     @UpdateTimestamp
     private Date updatedDate;
-
 
     // ✅ Convert Resource → Entity
     public static Review toEntity(ReviewResource reviewResource) {
