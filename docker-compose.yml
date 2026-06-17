@@ -14,5 +14,17 @@ services:
     volumes:
       - elasticsearch_data:/usr/share/elasticsearch/data
 
+  mysql:
+    image: mysql:8
+    container_name: movieshark_mysql
+    environment:
+      - MYSQL_ROOT_PASSWORD=rootroot1234
+      - MYSQL_DATABASE=movieshark
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+
 volumes:
   elasticsearch_data:
+  mysql_data:
