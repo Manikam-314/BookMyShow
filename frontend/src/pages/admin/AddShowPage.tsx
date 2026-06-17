@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Save, AlertCircle } from 'lucide-react';
+import { Save } from 'lucide-react';
 
 import { movieService } from '../../services/movieService';
 import { theatreService } from '../../services/theatreService';

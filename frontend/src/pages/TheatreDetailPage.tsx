@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { MapPin, Calendar, Info, Film, ChevronRight, Navigation, Clock, Star } from 'lucide-react';
+import { MapPin, Calendar, Info, ChevronRight, Navigation, Clock, Star } from 'lucide-react';
 import { theatreService } from '../services/theatreService';
 import { showService } from '../services/showService';
 import type { Theatre, Show } from '../types';

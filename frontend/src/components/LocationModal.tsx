@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Search, MapPin, X, ChevronRight } from 'lucide-react';
+import { Search, MapPin, X } from 'lucide-react';
 
 interface LocationModalProps {
     isOpen: boolean;

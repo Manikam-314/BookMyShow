@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { X, Calendar, Clock, Film } from 'lucide-react';
+import { X, Calendar, Film } from 'lucide-react';
 import type { Show } from '../types';
 import { showService } from '../services/showService';
 
@@ -10,7 +10,7 @@ interface TheatreScheduleModalProps {
     theatreId: number;
 }
 
-const TheatreScheduleModal: React.FC<TheatreScheduleModalProps> = ({ isOpen, onClose, theatreName, theatreId }) => {
+const TheatreScheduleModal: React.FC<TheatreScheduleModalProps> = ({ isOpen, onClose, theatreName, theatreId: _theatreId }) => {
     const [shows, setShows] = useState<Show[]>([]);
     const [loading, setLoading] = useState(false);
 

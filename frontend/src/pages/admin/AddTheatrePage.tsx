@@ -16,7 +16,8 @@ const AddTheatrePage: React.FC = () => {
         try {
             await theatreService.addTheatre({
                 ...formData,
-                facilities: formData.facilities.split(',').map(f => f.trim())
+                facilities: formData.facilities.split(',').map(f => f.trim()),
+                seatsConfigured: false
             });
             alert("Theatre Added Successfully!");
         } catch (error) {
