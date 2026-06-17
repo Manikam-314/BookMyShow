@@ -162,7 +162,8 @@ const BulkSchedulePage: React.FC = () => {
             </div>
 
             <div className="bg-slate-800 rounded-xl border border-slate-700 overflow-hidden">
-                <table className="w-full text-left">
+                <div className="overflow-x-auto">
+                    <table className="w-full text-left">
                     <thead className="bg-slate-900 text-gray-400">
                         <tr>
                             <th className="p-4">Movie</th>
@@ -226,6 +227,7 @@ const BulkSchedulePage: React.FC = () => {
                         ))}
                     </tbody>
                 </table>
+                </div>
                 <div className="p-4 bg-slate-900 flex justify-between">
                     <button
                         onClick={addRow}
