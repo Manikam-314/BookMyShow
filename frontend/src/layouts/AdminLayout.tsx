@@ -1,10 +1,18 @@
 import React, { useState } from 'react';
-import { Outlet, Link, useLocation } from 'react-router-dom';
+import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import { LayoutDashboard, Film, Monitor, Calendar, LogOut, ClipboardList, Menu, X } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 
 const AdminLayout: React.FC = () => {
     const location = useLocation();
+    const navigate = useNavigate();
+    const { logout } = useAuth();
     const [sidebarOpen, setSidebarOpen] = useState(false);
+
+    const handleLogout = () => {
+        logout();
+        navigate('/login');
+    };
 
     const NAV_ITEMS = [
         { path: '/admin', label: 'Dashboard', icon: LayoutDashboard },
@@ -51,7 +59,10 @@ const AdminLayout: React.FC = () => {
             </nav>
 
             <div className="p-4 border-t border-slate-800">
-                <button className="flex items-center gap-3 text-gray-400 hover:text-white px-4 py-2 w-full transition-colors">
+                <button
+                    onClick={handleLogout}
+                    className="flex items-center gap-3 text-gray-400 hover:text-white px-4 py-2 w-full transition-colors"
+                >
                     <LogOut className="w-5 h-5" />
                     <span>Logout</span>
                 </button>
