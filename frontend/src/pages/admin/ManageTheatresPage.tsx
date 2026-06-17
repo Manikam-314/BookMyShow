@@ -51,7 +51,8 @@ const ManageTheatresPage: React.FC = () => {
                 <div className="text-center py-10">Loading...</div>
             ) : (
                 <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
-                    <table className="w-full text-left">
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-left">
                         <thead className="bg-gray-50 dark:bg-slate-700">
                             <tr>
                                 <th className="p-4 text-sm font-medium text-gray-500 dark:text-gray-300">ID</th>
@@ -88,6 +89,7 @@ const ManageTheatresPage: React.FC = () => {
                             ))}
                         </tbody>
                     </table>
+                    </div>
                     {theatres.length === 0 && (
                         <div className="text-center py-8 text-gray-500">No theatres found.</div>
                     )}
