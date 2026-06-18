@@ -104,11 +104,11 @@
             <version>8.3.0</version>
         </dependency>
 
-        <!-- Search Engine -->
+        <!-- Search Engine
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-data-elasticsearch</artifactId>
-        </dependency>
+        </dependency> -->
 
         <!-- DevTools for automatic restart -->
         <dependency>
