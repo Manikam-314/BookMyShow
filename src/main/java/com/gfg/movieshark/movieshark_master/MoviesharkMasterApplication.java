@@ -16,7 +16,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 
 @SpringBootApplication
 @EnableScheduling
-@EnableElasticsearchRepositories(basePackages = "com.gfg.movieshark.movieshark_master.search")
+// @EnableElasticsearchRepositories(basePackages = "com.gfg.movieshark.movieshark_master.search")
 public class MoviesharkMasterApplication {
 
     public static void main(String[] args) {
