@@ -103,13 +103,7 @@
 // }
 package com.gfg.movieshark.movieshark_master.service;
 
-import com.gfg.movieshark.movieshark_master.domain.Movie;
-import com.gfg.movieshark.movieshark_master.domain.Show;
-import com.gfg.movieshark.movieshark_master.domain.Theater;
-import com.gfg.movieshark.movieshark_master.repository.ShowRepository;
-import com.gfg.movieshark.movieshark_master.search.MovieIndex;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -119,30 +113,8 @@ import java.util.List;
 @Service
 public class SearchService {
 
-
-@Autowired
-private ShowRepository showRepository;
-
-private MovieIndex mapToShowIndex(Show show) {
-    Movie movie = show.getMovie();
-    Theater theater = show.getTheater();
-
-    return MovieIndex.builder()
-            .id(movie.getId() + "_" + theater.getId())
-            .movieId(movie.getId())
-            .movieTitle(movie.getTitle())
-            .genre(movie.getGenre() != null ? movie.getGenre().name() : "N/A")
-            .rating(movie.getRating())
-            .theaterId(theater.getId())
-            .theaterName(theater.getName())
-            .city(theater.getCity())
-            .address(theater.getAddress())
-            .build();
-}
-
-public List<MovieIndex> search(String query) {
-    log.warn("Elasticsearch is temporarily disabled.");
-    return new ArrayList<>();
-}
-
+    public List<Object> search(String query) {
+        log.warn("Elasticsearch is temporarily disabled.");
+        return new ArrayList<>();
+    }
 }
