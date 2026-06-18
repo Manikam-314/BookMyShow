@@ -119,7 +119,7 @@ import java.util.List;
 @Service
 public class SearchService {
 
-```
+
 @Autowired
 private ShowRepository showRepository;
 
@@ -144,6 +144,5 @@ public List<MovieIndex> search(String query) {
     log.warn("Elasticsearch is temporarily disabled.");
     return new ArrayList<>();
 }
-```
 
 }
