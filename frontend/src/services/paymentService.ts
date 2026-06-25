@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_URL = 'http://54.242.144.155:8080/payment';
+const API_URL = 'http://54.242.144.155:9099/payment';
 
 export const paymentService = {
     createOrder: async (amount: number, bookingResource: any) => {
