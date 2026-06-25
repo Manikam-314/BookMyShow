@@ -87,7 +87,7 @@ public class SecurityConfig {
         "http://localhost:5175",
         "http://localhost:5176",
         "http://localhost:5177",
-        "https://book-my-show-mu-eosin.vercel.app"
+    "http://movie-ticket-booking-system.s3-website-us-east-1.amazonaws.com"
     ));        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(Arrays.asList("*"));
         configuration.setAllowCredentials(true);
