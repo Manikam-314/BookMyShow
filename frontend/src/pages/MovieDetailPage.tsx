@@ -64,10 +64,10 @@ const MovieDetailPage: React.FC = () => {
         : 'Released';
 
     return (
-        <div className="bg-[#0a0a0f] min-h-screen pb-24">
+        <div className="bg-[#0a0a0f] min-h-screen pb-24 overflow-x-hidden">
 
             {/* ── Hero Banner ── */}
-            <div className="relative w-full h-[520px]">
+            <div className="relative w-full h-[400px] sm:h-[460px] md:h-[520px]">
                 {/* Blurred background image */}
                 <div
                     className="absolute inset-0 bg-cover bg-center scale-105"
@@ -78,7 +78,7 @@ const MovieDetailPage: React.FC = () => {
                 {/* Left-to-right vignette */}
                 <div className="absolute inset-0 bg-gradient-to-r from-[#0a0a0f]/80 via-transparent to-transparent" />
 
-                <div className="relative max-w-7xl mx-auto px-4 h-full flex items-end pb-10 gap-8">
+                <div className="relative max-w-7xl mx-auto px-4 sm:px-6 h-full flex items-end pb-8 sm:pb-10 gap-4 sm:gap-8">
                     {/* Poster card */}
                     <div className="hidden md:flex flex-col shrink-0 w-52 rounded-2xl overflow-hidden shadow-2xl shadow-black/60 border border-white/10">
                         <img
@@ -94,7 +94,7 @@ const MovieDetailPage: React.FC = () => {
 
                     {/* Info */}
                     <div className="text-white flex-1 space-y-4">
-                        <h1 className="text-4xl md:text-5xl font-bold tracking-tight">{movie.title}</h1>
+                        <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight">{movie.title}</h1>
 
                         {/* Meta chips */}
                         <div className="flex flex-wrap gap-2 text-xs">
@@ -139,7 +139,7 @@ const MovieDetailPage: React.FC = () => {
                         {/* CTA */}
                         <button
                             onClick={() => navigate(`/buy-tickets/${movie.id}`)}
-                            className="flex items-center gap-2 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white px-10 py-3.5 rounded-xl text-base font-bold shadow-xl shadow-red-500/30 transition-all hover:scale-105 hover:shadow-red-500/40"
+                            className="flex items-center gap-2 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white px-6 sm:px-10 py-3 sm:py-3.5 rounded-xl text-sm sm:text-base font-bold shadow-xl shadow-red-500/30 transition-all hover:scale-105 hover:shadow-red-500/40"
                         >
                             <Ticket className="w-5 h-5" /> Book Tickets
                         </button>
@@ -153,7 +153,7 @@ const MovieDetailPage: React.FC = () => {
             </div>
 
             {/* ── Body ── */}
-            <div className="max-w-7xl mx-auto px-4 py-12 grid grid-cols-1 lg:grid-cols-4 gap-10">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8 sm:py-12 grid grid-cols-1 lg:grid-cols-4 gap-8 sm:gap-10">
 
                 {/* Main column */}
                 <div className="lg:col-span-3 space-y-12">

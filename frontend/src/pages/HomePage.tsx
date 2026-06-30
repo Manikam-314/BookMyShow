@@ -146,17 +146,17 @@ const HomePage: React.FC = () => {
         : movies.filter(m => m.genre?.toLowerCase().includes(activeGenre.toLowerCase()));
 
     return (
-        <div className="bg-[#0a0a0f] min-h-screen text-white font-sans">
+        <div className="bg-[#0a0a0f] min-h-screen text-white font-sans overflow-x-hidden">
 
             {/* ── HERO ─────────────────────────────────────────────────────── */}
-            <div className="relative w-full h-[480px] md:h-[560px] overflow-hidden">
+            <div className="relative w-full h-[420px] sm:h-[480px] md:h-[560px] overflow-hidden">
                 {/* Animated gradient background */}
                 <div className={`absolute inset-0 bg-gradient-to-br ${slide.bg} transition-all duration-1000`} />
 
                 {/* Cinema reel decorative circles */}
-                <div className="absolute -right-24 -top-24 w-96 h-96 rounded-full opacity-10"
+                <div className="absolute -right-24 -top-24 w-64 sm:w-96 h-64 sm:h-96 rounded-full opacity-10"
                     style={{ background: `radial-gradient(circle, ${slide.accent}, transparent 70%)` }} />
-                <div className="absolute -left-16 -bottom-16 w-64 h-64 rounded-full opacity-10"
+                <div className="absolute -left-16 -bottom-16 w-48 sm:w-64 h-48 sm:h-64 rounded-full opacity-10"
                     style={{ background: `radial-gradient(circle, ${slide.accent}, transparent 70%)` }} />
 
                 {/* Film strip top bar */}
@@ -167,29 +167,29 @@ const HomePage: React.FC = () => {
                 </div>
 
                 {/* Content */}
-                <div className="relative z-10 h-full max-w-7xl mx-auto px-6 flex flex-col justify-center">
+                <div className="relative z-10 h-full max-w-7xl mx-auto px-4 sm:px-6 flex flex-col justify-center">
                     <div key={heroIndex} className="animate-fade-in">
                         <span className="inline-flex items-center gap-2 text-xs font-bold tracking-widest mb-4 px-3 py-1.5 rounded-full bg-white/10 border border-white/20"
                             style={{ color: slide.accent }}>
                             <Zap className="w-3 h-3" /> {slide.tag}
                         </span>
-                        <h1 className="text-4xl md:text-6xl font-bold text-white leading-tight mb-4 max-w-2xl" style={{ whiteSpace: 'pre-line' }}>
+                        <h1 className="text-3xl sm:text-4xl md:text-6xl font-bold text-white leading-tight mb-4 max-w-2xl break-words" style={{ whiteSpace: 'pre-line' }}>
                             {slide.title}
                         </h1>
-                        <p className="text-slate-400 text-base md:text-lg max-w-lg mb-8 leading-relaxed">
+                        <p className="text-slate-400 text-sm sm:text-base md:text-lg max-w-lg mb-6 sm:mb-8 leading-relaxed">
                             {slide.sub}
                         </p>
-                        <div className="flex items-center gap-4 flex-wrap">
+                        <div className="flex items-center gap-3 sm:gap-4 flex-wrap">
                             <button
                                 onClick={() => navigate(slide.href)}
-                                className="flex items-center gap-2 text-white font-bold px-7 py-3.5 rounded-xl transition-all hover:scale-105 hover:shadow-xl shadow-lg"
+                                className="flex items-center gap-2 text-white font-bold px-5 sm:px-7 py-3 sm:py-3.5 rounded-xl transition-all hover:scale-105 hover:shadow-xl shadow-lg text-sm sm:text-base"
                                 style={{ background: `linear-gradient(135deg, ${slide.accent}, ${slide.accent}bb)` }}
                             >
                                 <Ticket className="w-4 h-4" /> {slide.cta}
                             </button>
                             <button
                                 onClick={() => navigate('/movies')}
-                                className="flex items-center gap-2 text-white/70 hover:text-white border border-white/20 hover:border-white/40 font-medium px-6 py-3.5 rounded-xl transition-all"
+                                className="flex items-center gap-2 text-white/70 hover:text-white border border-white/20 hover:border-white/40 font-medium px-4 sm:px-6 py-3 sm:py-3.5 rounded-xl transition-all text-sm sm:text-base"
                             >
                                 <Film className="w-4 h-4" /> All Movies
                             </button>
@@ -214,7 +214,7 @@ const HomePage: React.FC = () => {
             </div>
 
             {/* ── STATS BAR ────────────────────────────────────────────────── */}
-            <div className="max-w-7xl mx-auto px-6 -mt-6 mb-12 relative z-10">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 -mt-6 mb-12 relative z-10">
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                     {STATS.map(s => (
                         <div key={s.label} className="bg-white/5 border border-white/10 rounded-2xl p-4 flex items-center gap-3 backdrop-blur-sm hover:border-white/20 transition-all">
@@ -231,7 +231,7 @@ const HomePage: React.FC = () => {
             </div>
 
             {/* ── MOVIES SECTION ───────────────────────────────────────────── */}
-            <div className="max-w-7xl mx-auto px-6 pb-16">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 pb-16">
 
                 {/* Section header */}
                 <div className="flex items-center justify-between mb-6">
@@ -299,10 +299,10 @@ const HomePage: React.FC = () => {
                     }}>
                         <div className="absolute inset-0 opacity-30"
                             style={{ backgroundImage: 'radial-gradient(circle at 20% 50%, #7c3aed33, transparent 50%), radial-gradient(circle at 80% 50%, #dc262633, transparent 50%)' }} />
-                        <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-6 p-8 md:p-10">
+                        <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-6 p-6 sm:p-8 md:p-10">
                             <div>
-                                <h3 className="text-2xl md:text-3xl font-bold text-white mb-2">Own a Theatre?</h3>
-                                <p className="text-slate-400 max-w-md">Partner with MovieBooky — list your theatre, schedule shows and manage bookings all in one place.</p>
+                                <h3 className="text-xl sm:text-2xl md:text-3xl font-bold text-white mb-2 text-center md:text-left">Own a Theatre?</h3>
+                                <p className="text-slate-400 max-w-md text-sm sm:text-base text-center md:text-left">Partner with MovieBooky — list your theatre, schedule shows and manage bookings all in one place.</p>
                             </div>
                             <button
                                 onClick={() => navigate('/owner/register')}

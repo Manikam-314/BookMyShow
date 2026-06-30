@@ -7,9 +7,11 @@
 }
 
 @layer base {
-  body {
+  html, body {
     @apply bg-bms-bg text-gray-800 antialiased;
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    overflow-x: hidden;
+    max-width: 100vw;
   }
 }
 

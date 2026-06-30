@@ -65,29 +65,29 @@ const TheatreListingPage: React.FC = () => {
     }, [movieId, selectedDate, selectedCity]); // Re-fetch if selectedCity changes
 
     return (
-        <div className="bg-[#0a0a0f] min-h-screen font-sans text-slate-300 pb-20">
+        <div className="bg-[#0a0a0f] min-h-screen font-sans text-slate-300 pb-20 overflow-x-hidden">
 
             {/* Header: Movie Info & Date Filter */}
             <div className="bg-[#0a0a0f]/60 backdrop-blur-xl border-b border-white/10 sticky top-16 z-40">
-                <div className="max-w-7xl mx-auto px-4 py-6">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 sm:py-6">
                     <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
                         <div>
                             <div className="flex items-center gap-2 text-red-500 text-xs font-bold tracking-widest uppercase mb-1">
                                 <Clock className="w-3 h-3" /> Now Showing
                             </div>
-                            <h1 className="text-3xl md:text-4xl font-bold text-white tracking-tight">
+                            <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-white tracking-tight">
                                 {loading ? 'Loading...' : (movie ? movie.title : 'Movie Not Found')}
-                                <span className="text-slate-500 text-lg font-medium ml-3">— {movie?.language || 'All Languages'}</span>
+                                <span className="text-slate-500 text-sm sm:text-lg font-medium ml-2 sm:ml-3">— {movie?.language || 'All Languages'}</span>
                             </h1>
                         </div>
 
                         {/* Date Slider */}
-                        <div className="flex gap-3 bg-white/5 p-1.5 rounded-2xl border border-white/5">
+                        <div className="flex gap-2 sm:gap-3 bg-white/5 p-1.5 rounded-2xl border border-white/5 overflow-x-auto scrollbar-hide">
                             {DATES.map((d, i) => (
                                 <button
                                     key={i}
                                     onClick={() => setSelectedDate(i)}
-                                    className={`flex flex-col items-center min-w-[64px] py-2.5 rounded-xl transition-all ${selectedDate === i
+                                    className={`flex flex-col items-center min-w-[56px] sm:min-w-[64px] py-2 sm:py-2.5 rounded-xl transition-all ${selectedDate === i
                                         ? 'bg-red-600 text-white shadow-lg shadow-red-600/40'
                                         : 'hover:bg-white/10 text-slate-400'
                                         }`}
@@ -101,7 +101,7 @@ const TheatreListingPage: React.FC = () => {
                     </div>
 
                     {/* Secondary Filters */}
-                    <div className="flex flex-wrap items-center gap-6 mt-8 pt-6 border-t border-white/5">
+                    <div className="flex flex-wrap items-center gap-4 sm:gap-6 mt-6 sm:mt-8 pt-4 sm:pt-6 border-t border-white/5">
                         <div className="flex items-center gap-2 text-sm text-slate-400 cursor-pointer hover:text-white transition-colors">
                             <span className="font-semibold">Format: 2D/3D</span>
                             <ChevronDown className="w-4 h-4 text-slate-500" />
@@ -128,7 +128,7 @@ const TheatreListingPage: React.FC = () => {
             </div>
 
             {/* Legend */}
-            <div className="max-w-7xl mx-auto px-4 py-4 flex flex-wrap justify-end gap-6 text-[10px] text-slate-500 uppercase font-semibold tracking-widest">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex flex-wrap justify-end gap-4 sm:gap-6 text-[10px] text-slate-500 uppercase font-semibold tracking-widest">
                 <div className="flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-emerald-500 shadow-sm shadow-emerald-500/50"></div> Available</div>
                 <div className="flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-amber-500 shadow-sm shadow-amber-500/50"></div> Fast Filling</div>
                 <div className="flex items-center gap-2 border border-emerald-500/50 px-1.5 py-0.5 text-emerald-500 rounded-sm">LAN</div>
@@ -136,14 +136,14 @@ const TheatreListingPage: React.FC = () => {
             </div>
 
             {/* Theatres List */}
-            <div className="max-w-7xl mx-auto px-4 py-6 space-y-6">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 space-y-6">
                 {Object.keys(groupedShows).length > 0 ? (
                     Object.keys(groupedShows).map(theatreName => {
                         const theatreShows = groupedShows[theatreName];
                         if (theatreShows.length === 0) return null;
 
                         return (
-                            <div key={theatreName} className="bg-white/5 backdrop-blur-md p-8 rounded-2xl border border-white/10 hover:border-red-500/30 transition-all flex flex-col md:flex-row gap-8 group">
+                            <div key={theatreName} className="bg-white/5 backdrop-blur-md p-4 sm:p-6 md:p-8 rounded-2xl border border-white/10 hover:border-red-500/30 transition-all flex flex-col md:flex-row gap-4 sm:gap-6 md:gap-8 group">
 
                                 {/* Theatre Info */}
                                 <div className="w-full md:w-1/3 xl:w-1/4 space-y-4">

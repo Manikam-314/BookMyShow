@@ -202,17 +202,17 @@ const SeatSelectionPage: React.FC = () => {
     if (!show || !movie || !theatre) return <div className="min-h-screen bg-[#0a0a0f] flex items-center justify-center text-slate-500 font-semibold tracking-wide lowercase italic">Session Expired</div>;
 
     return (
-        <div className="min-h-screen bg-[#0a0a0f] flex flex-col overflow-hidden text-slate-300 font-sans">
+        <div className="min-h-screen bg-[#0a0a0f] flex flex-col overflow-hidden text-slate-300 font-sans overflow-x-hidden">
             <SeatQuantityModal isOpen={showQuantityModal} onClose={() => setShowQuantityModal(false)} onSelect={handleQuantitySelect} />
 
             {/* Header */}
-            <header className="bg-[#0a0a0f]/80 backdrop-blur-xl border-b border-white/10 px-6 py-4 flex justify-between items-center z-50 sticky top-16 shadow-2xl">
-                <div className="flex items-center gap-6">
+            <header className="bg-[#0a0a0f]/80 backdrop-blur-xl border-b border-white/10 px-3 sm:px-6 py-3 sm:py-4 flex justify-between items-center z-50 sticky top-16 shadow-2xl">
+                <div className="flex items-center gap-3 sm:gap-6 min-w-0">
                     <button onClick={() => navigate(-1)} className="bg-white/5 hover:bg-white/10 p-2.5 rounded-2xl border border-white/10 transition-all group">
                         <ChevronLeft className="w-6 h-6 text-slate-400 group-hover:text-white" />
                     </button>
                     <div>
-                        <h1 className="text-xl font-bold text-white flex items-center gap-3 tracking-tight">
+                        <h1 className="text-sm sm:text-lg md:text-xl font-bold text-white flex items-center gap-2 sm:gap-3 tracking-tight truncate">
                             {movie.title}
                             <span className="text-[10px] font-bold border border-white/20 rounded-md px-2 py-0.5 text-slate-500 tracking-wider">{movie.sensorRating || 'UA'}</span>
                         </h1>
@@ -221,7 +221,7 @@ const SeatSelectionPage: React.FC = () => {
                         </p>
                     </div>
                 </div>
-                <div className="flex items-center gap-6">
+                <div className="flex items-center gap-3 sm:gap-6 flex-shrink-0">
                     <div className="hidden lg:flex items-center gap-6 text-[11px] font-medium text-slate-400 mr-4">
                         <div className="flex items-center gap-2"><div className="w-2.5 h-2.5 rounded-sm bg-white/5 border border-white/10"></div> Available</div>
                         <div className="flex items-center gap-2"><div className="w-2.5 h-2.5 rounded-sm bg-white/20 border border-white/20"></div> Booked</div>
@@ -238,7 +238,7 @@ const SeatSelectionPage: React.FC = () => {
 
             {/* Main Content Area */}
             <div className="flex-1 flex overflow-hidden relative">
-                <div className="flex-1 overflow-auto relative bg-[#0a0a0f] flex items-center justify-center p-20 cursor-grab active:cursor-grabbing scroller" id="seat-map-container">
+                <div className="flex-1 overflow-auto relative bg-[#0a0a0f] flex items-center justify-center p-4 sm:p-10 md:p-20 cursor-grab active:cursor-grabbing scroller" id="seat-map-container">
                     <div style={{ transform: `scale(${scale})` }} className="transition-transform duration-300 origin-center text-center pb-40">
                         <div className="flex flex-col gap-12">
                             {seatLayout.recliner.length > 0 && <SeatRowSection title="Recliner" price={seatLayout.recliner[0].price} seats={seatLayout.recliner} selectedSeats={selectedSeats} onToggle={toggleSeat} />}
@@ -249,8 +249,8 @@ const SeatSelectionPage: React.FC = () => {
                         {/* Screen Indicator */}
                         <div className="mt-24 mb-10 opacity-70">
                             <p className="text-[11px] font-semibold text-slate-600 mb-6 tracking-[0.3em] uppercase">Cinematic Stage</p>
-                            <div className="w-[700px] h-2 bg-red-600 rounded-full mx-auto shadow-[0_10px_40px_rgba(239,68,68,0.6)] blur-[1px]"></div>
-                            <div className="w-[600px] h-16 bg-gradient-to-t from-red-600/10 to-transparent mx-auto mt-2 rounded-b-[100%]"></div>
+                            <div className="w-[90vw] max-w-[700px] h-2 bg-red-600 rounded-full mx-auto shadow-[0_10px_40px_rgba(239,68,68,0.6)] blur-[1px]"></div>
+                            <div className="w-[80vw] max-w-[600px] h-16 bg-gradient-to-t from-red-600/10 to-transparent mx-auto mt-2 rounded-b-[100%]"></div>
                         </div>
                     </div>
                 </div>
@@ -270,9 +270,9 @@ const SeatSelectionPage: React.FC = () => {
 
             {/* Footer Checkout Bar */}
             {selectedSeats.length > 0 && (
-                <div className="fixed bottom-0 left-0 right-0 bg-black/40 backdrop-blur-3xl border-t border-white/10 p-6 z-[100] animate-in slide-in-from-bottom-10 duration-500">
-                    <div className="max-w-7xl mx-auto flex items-center justify-between">
-                        <div className="flex items-center gap-10">
+                <div className="fixed bottom-0 left-0 right-0 bg-black/40 backdrop-blur-3xl border-t border-white/10 p-4 sm:p-6 z-[100] animate-in slide-in-from-bottom-10 duration-500">
+                    <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                        <div className="flex items-center gap-4 sm:gap-10">
                             <div>
                                 <p className="text-[10px] text-slate-510 font-medium tracking-wide mb-1">Seats Selected</p>
                                 <div className="flex gap-2">
@@ -287,7 +287,7 @@ const SeatSelectionPage: React.FC = () => {
                                 <p className="text-xs font-semibold text-emerald-400">₹0.00 <span className="text-[9px] text-slate-600 font-normal">(Promo Ready)</span></p>
                             </div>
                         </div>
-                        <button onClick={handleProceed} className="bg-red-600 hover:bg-red-700 text-white px-12 py-4 rounded-2xl font-bold text-sm tracking-tight shadow-2xl shadow-red-600/30 transition-all hover:scale-[1.02] active:scale-95 flex items-center gap-3 group/pay">
+                        <button onClick={handleProceed} className="bg-red-600 hover:bg-red-700 text-white px-6 sm:px-12 py-3 sm:py-4 rounded-2xl font-bold text-sm tracking-tight shadow-2xl shadow-red-600/30 transition-all hover:scale-[1.02] active:scale-95 flex items-center gap-3 group/pay w-full sm:w-auto justify-center">
                             Checkout ₹{totalPrice}
                             <div className="bg-white/20 p-1 rounded-md group-hover/pay:bg-white/30 transition-colors">
                                 <ChevronRight className="w-4 h-4" />
@@ -298,7 +298,7 @@ const SeatSelectionPage: React.FC = () => {
             )}
 
             {/* Zoom Controls */}
-            <div className="absolute bottom-28 right-10 z-40 flex flex-col gap-3">
+            <div className="absolute bottom-28 right-4 sm:right-10 z-40 flex flex-col gap-3">
                 <button onClick={() => setScale(s => Math.min(s + 0.1, 1.5))} className="p-3 bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 hover:bg-white/10 transition-all text-slate-400 hover:text-white shadow-2xl">
                     <ZoomIn className="w-5 h-5" />
                 </button>
