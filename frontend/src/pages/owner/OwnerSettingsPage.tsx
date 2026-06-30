@@ -54,7 +54,7 @@ const OwnerSettingsPage: React.FC = () => {
                 showTimings: timings.join(',')
             };
 
-            await api.put('/theatre-owner/update-my-theatre', payload);
+            await api.put('/theater/owner/update-my-theatre', payload);
             setSuccess('Settings updated successfully!');
             refetch(); // Update global context
         } catch (err: any) {

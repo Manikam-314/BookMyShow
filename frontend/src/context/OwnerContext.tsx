@@ -49,14 +49,14 @@ export const OwnerProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         ensureAuthHeader();
         try {
             // 1. Get the owner's application status
-            const { data: appData } = await api.get<TheatreApplication>('/theatre-owner/status');
+            const { data: appData } = await api.get<TheatreApplication>('/theater/owner/status');
             setApp(appData);
 
             // 2. If APPROVED → use the backend endpoint to reliably get the Theatre entity
             //    (no fragile name-matching on the client side)
             if (appData.status === 'APPROVED') {
                 try {
-                    const { data: theatreData } = await api.get<Theatre>('/theatre-owner/my-theatre');
+                    const { data: theatreData } = await api.get<Theatre>('/theater/owner/my-theatre');
                     setMyTheatre(theatreData);
                 } catch {
                     // Theatre entity not yet created — treat as no theatre

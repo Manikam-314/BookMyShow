@@ -53,7 +53,7 @@ public class SecurityConfig {
                         .requestMatchers("/admin/**").hasRole("ADMIN")
 
                         // Theatre Owner only
-                        .requestMatchers("/theatre-owner/**").hasRole("THEATRE_OWNER")
+                        .requestMatchers("/theater/owner/**").hasRole("THEATRE_OWNER")
 
                         // Everything else — permit (keeps existing endpoints working)
                         .anyRequest().permitAll())

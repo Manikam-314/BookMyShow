@@ -17,7 +17,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/theatre-owner")
+@RequestMapping("/theater/owner")
 @RequiredArgsConstructor
 @PreAuthorize("hasRole('THEATRE_OWNER')")
 public class TheatreOwnerController {
