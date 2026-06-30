@@ -63,4 +63,37 @@ public class AuthController {
         response.put("principal", auth.getPrincipal());
         return ResponseEntity.ok(response);
     }
+
+    @org.springframework.beans.factory.annotation.Autowired
+    private com.gfg.movieshark.movieshark_master.repository.UserRepository userRepository;
+
+    @org.springframework.beans.factory.annotation.Autowired
+    private com.gfg.movieshark.movieshark_master.repository.TheatreApplicationRepository theatreApplicationRepository;
+
+    @GetMapping("/debug-all-info")
+    public ResponseEntity<?> debugAllInfo() {
+        Map<String, Object> data = new HashMap<>();
+        
+        data.put("users", userRepository.findAll().stream().map(u -> {
+            Map<String, Object> m = new HashMap<>();
+            m.put("id", u.getId());
+            m.put("name", u.getName());
+            m.put("email", u.getEmail());
+            m.put("role", u.getRole());
+            return m;
+        }).toList());
+
+        data.put("applications", theatreApplicationRepository.findAll().stream().map(app -> {
+            Map<String, Object> m = new HashMap<>();
+            m.put("id", app.getId());
+            m.put("theatreName", app.getTheatreName());
+            m.put("ownerName", app.getOwnerName());
+            m.put("email", app.getEmail());
+            m.put("status", app.getStatus());
+            m.put("ownerId", app.getOwner() != null ? app.getOwner().getId() : null);
+            return m;
+        }).toList());
+
+        return ResponseEntity.ok(data);
+    }
 }

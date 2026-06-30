@@ -28,3 +28,4 @@ services:
 volumes:
   elasticsearch_data:
   mysql_data:
+  

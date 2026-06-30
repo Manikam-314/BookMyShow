@@ -1,19 +1,9 @@
-import axios from 'axios';
-
-const API_URL = 'http://54.242.144.155:9099/payment';
+import api from './api';
 
 export const paymentService = {
     createOrder: async (amount: number, bookingResource: any) => {
         try {
-            const token = localStorage.getItem('token');
-            const response = await axios.post(`${API_URL}/create-order`, 
-                { amount, bookingResource },
-                {
-                    headers: {
-                        Authorization: `Bearer ${token}`
-                    }
-                }
-            );
+            const response = await api.post('/payment/create-order', { amount, bookingResource });
             return response.data;
         } catch (error) {
             throw error;
@@ -22,15 +12,7 @@ export const paymentService = {
 
     verifyPayment: async (verificationData: any) => {
         try {
-            const token = localStorage.getItem('token');
-            const response = await axios.post(`${API_URL}/verify`, 
-                verificationData,
-                {
-                    headers: {
-                        Authorization: `Bearer ${token}`
-                    }
-                }
-            );
+            const response = await api.post('/payment/verify', verificationData);
             return response.data;
         } catch (error) {
             throw error;

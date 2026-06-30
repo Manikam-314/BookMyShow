@@ -34,7 +34,9 @@ public class CorsConfig implements WebMvcConfigurer {
                         "http://localhost:5175",
                         "http://localhost:5176",
                         "http://localhost:5177",
-    "http://movie-ticket-booking-system.s3-website-us-east-1.amazonaws.com"
+                        "http://movie-ticket-booking-system.s3-website-us-east-1.amazonaws.com",
+                        "https://d3xbo27w3wc9u.cloudfront.net",
+                        "http://d3xbo27w3wc9u.cloudfront.net"
                 )
                 .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
                 .allowedHeaders("*")

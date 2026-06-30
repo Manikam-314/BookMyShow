@@ -60,7 +60,7 @@ const SeatSelectionPage: React.FC = () => {
 
         const token = localStorage.getItem('token') || '';
         const client = new Client({
-            webSocketFactory: () => new SockJS('http://54.242.144.155:9099/ws'),
+            webSocketFactory: () => new SockJS(`${import.meta.env.VITE_API_URL || ''}/ws`),
             connectHeaders: { Authorization: `Bearer ${token}` },
             debug: (str) => console.log('STOMP DEBUG: ', str),
             reconnectDelay: 5000,
