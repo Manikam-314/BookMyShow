@@ -93,10 +93,19 @@ public class ShowService {
 		if (!CollectionUtils.isEmpty(theaterSeatsEntities)) {
 			// Theater has explicit seat config — use it
 			for (TheaterSeats theaterSeats : theaterSeatsEntities) {
+				int rate;
+				if (theaterSeats.getSeatType() == SeatType.RECLINER) {
+					rate = maxPrice;
+				} else if (theaterSeats.getSeatType() == SeatType.SECOND_CLASS) {
+					rate = minPrice;
+				} else {
+					rate = (minPrice + maxPrice) / 2;
+				}
+
 				ShowSeat showSeat = ShowSeat.builder()
 						.seatNumber(theaterSeats.getSeatNumber())
 						.seatType(theaterSeats.getSeatType())
-						.rate(theaterSeats.getSeatType() == SeatType.RECLINER ? maxPrice : minPrice)
+						.rate(rate)
 						.booked(false)
 						.show(show)
 						.build();
@@ -110,8 +119,16 @@ public class ShowService {
 			int cols = theater.getTotalColumns() != null ? theater.getTotalColumns() : 15;
 			for (int r = 0; r < rows; r++) {
 				char rowChar = (char) ('A' + r);
-				SeatType type = r < 2 ? SeatType.RECLINER : SeatType.REGULAR;
-				int price = type == SeatType.RECLINER ? maxPrice : minPrice;
+				SeatType type = getSeatTypeForRow(r, rows);
+				int price;
+				if (type == SeatType.RECLINER) {
+					price = maxPrice;
+				} else if (type == SeatType.SECOND_CLASS) {
+					price = minPrice;
+				} else {
+					price = (minPrice + maxPrice) / 2;
+				}
+
 				for (int c = 1; c <= cols; c++) {
 					ShowSeat showSeat = ShowSeat.builder()
 							.seatNumber(rowChar + String.valueOf(c))
@@ -126,6 +143,29 @@ public class ShowService {
 		}
 
 		return showSeatsEntities;
+	}
+
+	private SeatType getSeatTypeForRow(int rowIndex, int totalRows) {
+		if (totalRows <= 2) {
+			return SeatType.FIRST_CLASS;
+		}
+		if (totalRows <= 5) {
+			if (rowIndex == 0) {
+				return SeatType.RECLINER;
+			} else if (rowIndex == totalRows - 1) {
+				return SeatType.SECOND_CLASS;
+			} else {
+				return SeatType.FIRST_CLASS;
+			}
+		}
+		// totalRows >= 6
+		if (rowIndex < 2) {
+			return SeatType.RECLINER;
+		} else if (rowIndex >= totalRows - 1) {
+			return SeatType.SECOND_CLASS;
+		} else {
+			return SeatType.FIRST_CLASS;
+		}
 	}
 
 	public List<String> getAvailableSlots(long theaterId, String date) {

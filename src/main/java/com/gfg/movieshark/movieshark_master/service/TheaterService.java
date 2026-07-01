@@ -127,14 +127,38 @@ public class TheaterService {
         // enough
         for (int i = 0; i < totalRows; i++) {
             char rowChar = (char) ('A' + i);
+            SeatType seatType = getSeatTypeForRow(i, totalRows);
 
             for (int col = 1; col <= totalColumns; col++) {
                 String seatNumber = "" + rowChar + col;
-                seats.add(getTheaterSeat(seatNumber, SeatType.RECLINER));
+                seats.add(getTheaterSeat(seatNumber, seatType));
             }
         }
 
         return seats; // 🚨 NO SAVE HERE
+    }
+
+    private SeatType getSeatTypeForRow(int rowIndex, int totalRows) {
+        if (totalRows <= 2) {
+            return SeatType.FIRST_CLASS;
+        }
+        if (totalRows <= 5) {
+            if (rowIndex == 0) {
+                return SeatType.RECLINER;
+            } else if (rowIndex == totalRows - 1) {
+                return SeatType.SECOND_CLASS;
+            } else {
+                return SeatType.FIRST_CLASS;
+            }
+        }
+        // totalRows >= 6
+        if (rowIndex < 2) {
+            return SeatType.RECLINER;
+        } else if (rowIndex >= totalRows - 1) {
+            return SeatType.SECOND_CLASS;
+        } else {
+            return SeatType.FIRST_CLASS;
+        }
     }
 
     private TheaterSeats getTheaterSeat(String seatNumber, SeatType seatType) {

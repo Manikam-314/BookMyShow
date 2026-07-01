@@ -33,7 +33,7 @@ const BookingSummaryPage: React.FC = () => {
         setBookingError(null);
         try {
             const rawSeatType = selectedSeats?.[0]?.type || 'RECLINER';
-            const seatType = (rawSeatType === 'RECLINER') ? 'RECLINER' : 'REGULAR';
+            const seatType = rawSeatType;
             const seatsNumbers: string[] = selectedSeats?.map((s: any) => `${s.row}${s.number}`) || [];
 
             let userId = 1;
